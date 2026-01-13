@@ -1,0 +1,51 @@
+name: "feat"
+description: "새 기능(개선 포함) 제안"
+title: "feat: "
+labels: ["type:feat"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 작성 가이드
+        - **Goal**은 문제→해결을 한 문단으로 요약
+        - **Definition of Done**은 체크리스트 형태로
+        - **Notes**에는 제약/데이터/참고 링크
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: 원하는 결과(배경/문제/해결 요약)
+      placeholder: "예) 프론트엔드에서 전달된 콘텐츠 정보(제목, 이미지 URL 등)를 검증하고 DB 테이블에 기록하여 데이터 일관성을 유지"
+    validations:
+      required: true
+
+  - type: textarea
+    id: dod
+    attributes:
+      label: Definition of Done
+      description: 체크리스트로 작성해주세요. (ex. API/테스트/문서/UX 시나리오 등)
+      placeholder: |
+        - [ ] API 스펙 확정 및 Swagger 예시 추가
+        - [ ] 프런트 버튼/로딩/에러 처리
+        - [ ] README 변경사항 반영
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: 결정/제약/데이터/참고 링크
+      placeholder: "예) 요청 타임박스 1500ms, maxResults=50, Redis 캐시 10분, 참조 이슈 #12"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options: ["prio:high", "prio:med", "prio:low"]
+      default: 1
+    validations:
+      required: false

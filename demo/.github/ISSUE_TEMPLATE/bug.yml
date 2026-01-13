@@ -1,0 +1,76 @@
+name: "bug"
+description: "버그 리포트"
+title: "bug: "
+labels: ["type:bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 작성 가이드
+        - **Steps to Reproduce**는 번호 목록으로
+        - **Expected / Actual**을 분리
+        - 가능하면 스크린샷/로그 첨부
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: 버그 요약(사용자 영향도 포함)
+      placeholder: "예) 검색 결과 클릭 시 제목 데이터가 '기록하기' 폼으로 전달되지 않아 수동 입력이 강제됨"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: 재현 절차(번호 목록)
+      placeholder: |
+        1) 검색창에서 '엘리멘탈' 키워드로 TMDB 검색 수행
+        2) 검색 결과 리스트에서 첫 번째 아이템 클릭
+        3) 이동된 기록 폼의 '제목' 필드가 비어있음
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+      placeholder: "예) 클릭한 영화의 제목 '엘리멘탈'이 폼의 Title 필드에 자동 입력되어야 함"
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual
+      placeholder: "예) Title 필드가 undefined 또는 빈 문자열로 표시됨"
+    validations:
+      required: true
+
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      placeholder: "예) local, Chrome(Latest), Java 17, Spring Boot 3.x, React"
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Screenshots
+      description: 관련 로그/스택트레이스/스크린샷
+      placeholder: "예) TypeError: Cannot read properties of undefined (reading 'title') at ContentForm.js:45"
+      render: shell
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options: ["prio:high", "prio:med", "prio:low"]
+      default: 0
+    validations:
+      required: false
