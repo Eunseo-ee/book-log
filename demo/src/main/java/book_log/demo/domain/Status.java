@@ -1,0 +1,3 @@
+public enum Status {
+    READING, WATCHING, COMPLETED, WANT_to_WATCH, STOPPED
+}
