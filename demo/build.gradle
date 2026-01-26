@@ -34,6 +34,8 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    // 2. PostgreSQL 드라이버 (Supabase 연결용)
+    runtimeOnly 'org.postgresql:postgresql'
 }
 
 tasks.named('test') {
