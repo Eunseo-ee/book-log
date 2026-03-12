@@ -32,6 +32,6 @@ public class SearchController {
             @RequestParam String query) {
         
         List<UnifiedSearchResponse> results = searchService.search(category, query);
-        return ResponseEntity.ok(results);
-        }
+        return ResponseEntity.ok(results); // HTTP 200 OK와 함께 검색 결과 리스트 JSON 형태로 포장해서 내보냄
+    }
 }
