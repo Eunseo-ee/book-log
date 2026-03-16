@@ -21,12 +21,12 @@ public class KakaoSearchService implements SearchProvider {
     @Value("${api.kakao.key}")
     private String kakaoKey;
 
-    // ???? 이거 왜 하는건지 ??
     @Override
     public boolean supports(Category category) {
         return category==Category.BOOK;
     }
 
+    // 형식 맞게 API 요청 링크 세팅 -> 요청 전송
     @Override
     public List<UnifiedSearchResponse> search(String query) {
         // 1. 헤더 설정
@@ -44,8 +44,10 @@ public class KakaoSearchService implements SearchProvider {
     }
 
     private List<UnifiedSearchResponse> mapToResponse(Map<String, Object> body) {
+        // 카카오 응답 = meta(검색정보)+documents(실제 책 리스트) -> documents 뽑아 쓰기
         List<Map<String, Object>> documents=(List<Map<String, Object>>) body.get("documents");
 
+        // 데이터 꺼내서 우리 규격 객체로 변환->다시 리스트로 모음
         return documents.stream().map(doc -> {
             List<String> authors = (List<String>) doc.get("authors");
             String author = (authors !=null && !authors.isEmpty()) ? authors.get(0) : "저자 미상";
@@ -55,7 +57,7 @@ public class KakaoSearchService implements SearchProvider {
                     .authorOrDirector(author)
                     .thumbnailUrl((String) doc.get("thumbnail"))
                     .category(Category.BOOK)
-                    .build();
+                    .build(); 
         }).collect(Collectors.toList());
     }
 }
