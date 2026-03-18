@@ -28,7 +28,7 @@ public class KakaoSearchService implements SearchProvider {
 
     // 형식 맞게 API 요청 링크 세팅 -> 요청 전송
     @Override
-    public List<UnifiedSearchResponse> search(String query) {
+    public List<UnifiedSearchResponse> search(Category category, String query) {
         // 1. 헤더 설정
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "KakaoAK "+kakaoKey);
