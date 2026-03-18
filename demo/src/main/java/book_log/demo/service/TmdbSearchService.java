@@ -2,6 +2,7 @@ package book_log.demo.service;
 
 import book_log.demo.config.ApiConfig;
 import book_log.demo.domain.Category;
+import book_log.demo.dto.response.TmdbResponse;
 import book_log.demo.dto.response.UnifiedSearchResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,42 +36,49 @@ public class TmdbSearchService implements SearchProvider {
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        // 2. URL 설정 (영화/드라마 구분해야함)
-        // 카테고리에 따라 movie 또는 tv로 경로 변경
-        String type = (category == category.MOVIE) ? "movie" : "tv";
-
-        String url = "https://api.themoviedb.org/3/search/"+type
-                        +"?query="+query
-                        +"&language=ko-KR";
+        // 2. Multi 검색 URL 설정 (영화/드라마 구분 없이 한번에 검색)
+        String url = "https://api.themoviedb.org/3/search/multi?query="
+                        +query+"&language=ko-KR";
         
         // 3. API 호출
-        ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
+        ResponseEntity<TmdbResponse> response = restTemplate.exchange(url, HttpMethod.GET, entity, TmdbResponse.class);
 
         return mapToResponse(response.getBody(), category);
     }
 
-    private List<UnifiedSearchResponse>mapToResponse(Map<String, Object> body, Category category) {
-        // TMDB는 results 라는 이름으로 목록 줌
-        List<Map<String, Object>> results=(List<Map<String, Object>>) body.get("results");
+    private List<UnifiedSearchResponse>mapToResponse(TmdbResponse body, Category category) {
 
-        return results.stream().map(res -> {
-            // 영화는 title, 드라마는 name 필드 사용
-            String title = (category == Category.MOVIE)
-                            ? (String) res.get("title")
-                            : (String) res.get("name");
-            
-            // 포스터 경로는 앞에 tmdb 기본 url 붙여야 이미지가 보임
-            String posterPath = (String) res.get("poster_path");
-            String fullTumbnailUrl = (posterPath != null)
-                                        ? "https://image.tmdb.org/t/p/w500" + posterPath
-                                        : null;
+        if (body==null || body.getResults()==null) return List.of();
 
-            return UnifiedSearchResponse.builder()
-                    .title(title)
-                    .authorOrDirector("상세 정보 참조") // 필요 시 감독 정보를 따로 가져오는 로직 추가 가능
-                    .thumbnailUrl(fullTumbnailUrl)
-                    .category(category)
-                    .build();
-        }).collect(Collectors.toList());
+        return body.getResults().stream()
+            // 인물 (person) 결과는 제외하고 영화와 드라마만 필터링
+            .filter(item->"movie".equals(item.getMediaType()) || "tv".equals(item.getMediaType()))
+            .map(item -> {
+                boolean isMovie = "movie".equals(item.getMediaType());
+
+                // 1. 제목 : 영화는 title, 드라마는 name 필드 사용
+                String title = isMovie ? item.getTitle() : item.getName();
+                
+                // 2. 개봉일/방영일 : 영환s release_date, 드라마는 first_air_date
+                String date = isMovie ? item.getReleaseDate() : item.getFirstAirDate();
+
+                // 3. 실제 아이템의 카테고리 결정 (아이템 자체의 mediaType 우선)
+                Category itemCategory = isMovie ? Category.MOVIE : Category.DRAMA;
+
+                // 4. 포스터 이미지
+                // 포스터 경로는 앞에 tmdb 기본 url 붙여야 이미지가 보임
+                String fullThumbnailUrl = (item.getPosterPath() != null)
+                                            ? "https://image.tmdb.org/t/p/w500" + item.getPosterPath()
+                                            : null;
+
+                return UnifiedSearchResponse.builder()
+                        .title(title)
+                        .authorOrDirector("상세 정보 참조")
+                        .releaseDate(date)
+                        .voteAverage(item.getVoteAverage())
+                        .thumbnailUrl(fullThumbnailUrl)
+                        .category(itemCategory)
+                        .build();
+            }).collect(Collectors.toList());
     }
 }

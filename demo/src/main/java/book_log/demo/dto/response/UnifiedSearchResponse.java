@@ -10,9 +10,9 @@ import lombok.Builder;
 @NoArgsConstructor @AllArgsConstructor
 public class UnifiedSearchResponse {
     private String title;
+    private String authorOrDirector; // 책: 저자 / 영화: 상세페이지 참조(또는 빈값)
+    private String releaseDate;
+    private Double voteAverage;
     private String thumbnailUrl;
-    private String externalId;
-    private String authorOrDirector;
-    // 우리가 정해놓은 Category Enuim에 맞게 내보내도록
     private Category category;
 }
