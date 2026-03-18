@@ -1,5 +1,6 @@
 package book_log.demo.service;
 
+import book_log.demo.config.ApiConfig;
 import book_log.demo.domain.Category;
 import book_log.demo.dto.response.UnifiedSearchResponse;
 import lombok.RequiredArgsConstructor;
@@ -17,9 +18,7 @@ import java.util.stream.Collectors;
 public class KakaoSearchService implements SearchProvider {
     
     private final RestTemplate restTemplate;
-
-    @Value("${api.kakao.key}")
-    private String kakaoKey;
+    private final ApiConfig apiConfig;
 
     @Override
     public boolean supports(Category category) {
@@ -31,7 +30,7 @@ public class KakaoSearchService implements SearchProvider {
     public List<UnifiedSearchResponse> search(Category category, String query) {
         // 1. 헤더 설정
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "KakaoAK "+kakaoKey);
+        headers.set("Authorization", "KakaoAK "+apiConfig.getKakaoKey());
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
         // 2. URL 설정

@@ -1,5 +1,6 @@
 package book_log.demo.service;
 
+import book_log.demo.config.ApiConfig;
 import book_log.demo.domain.Category;
 import book_log.demo.dto.response.UnifiedSearchResponse;
 import lombok.RequiredArgsConstructor;
@@ -17,9 +18,7 @@ import java.util.stream.Collectors;
 public class TmdbSearchService implements SearchProvider {
     
     private final RestTemplate restTemplate;
-
-    @Value("${api.tmdb.token}")
-    private String tmdbToken;
+    private final ApiConfig apiConfig;
 
     @Override
     public boolean supports(Category category) {
@@ -32,7 +31,7 @@ public class TmdbSearchService implements SearchProvider {
         HttpHeaders headers = new HttpHeaders();
 
         // TMDB는 'Bearer' 방식 사용
-        headers.set("Authorization", "Bearer " + tmdbToken);
+        headers.set("Authorization", "Bearer " + apiConfig.getTmdbToken());
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
