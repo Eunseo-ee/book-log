@@ -21,7 +21,7 @@ public class KakaoSearchService implements SearchProvider {
 
     @Override
     public boolean supports(Category category) {
-        return category==Category.BOOK;
+        return category==Category.BOOK || category == Category.ALL;
     }
 
     // 형식 맞게 API 요청 링크 세팅 -> 요청 전송
@@ -63,7 +63,7 @@ public class KakaoSearchService implements SearchProvider {
                             .authorOrDirector(authors)
                             .releaseDate(date)           // UnifiedSearchResponse에 추가한 필드 활용
                             .thumbnailUrl(doc.getThumbnail())
-                            .category(category)
+                            .category(Category.BOOK)
                             .build();
                 }).collect(Collectors.toList());
             }
