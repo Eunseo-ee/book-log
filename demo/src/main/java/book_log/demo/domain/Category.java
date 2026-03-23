@@ -1,5 +1,5 @@
 package book_log.demo.domain;
 
 public enum Category {
-    BOOK, ANIME, MOVIE, TV, ALL
+    BOOK, MOVIE, TV, ANIME, ANIME_MOVIE, ANIME_TVA, ALL
 }

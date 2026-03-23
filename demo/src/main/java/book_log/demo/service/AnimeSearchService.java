@@ -11,7 +11,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Service
+// @Service 
 @RequiredArgsConstructor
 public class AnimeSearchService implements SearchProvider {
     

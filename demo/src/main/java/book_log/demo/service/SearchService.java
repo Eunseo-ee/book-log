@@ -23,7 +23,16 @@ public class SearchService {
             return searchAll(query);
         }
 
-        // 2. 개별 카테고리 검색인 경우 (기존 로직 유지)
+        // 2. 애니메이션 검색인 경우
+        if (category == Category.ANIME) {
+            return providers.stream()
+                    .filter(p -> p.supports(Category.MOVIE) || p.supports(Category.TV)) // TMDB 소환
+                    .flatMap(p -> p.search(category, query).stream())
+                    .filter(r -> r.getCategory() == Category.ANIME_MOVIE || r.getCategory() == Category.ANIME_TVA)
+                    .collect(Collectors.toList());
+        }
+
+        // 3. 그 외 (BOOK, MOVIE, TV 등) 검색
         return providers.stream()
                 .filter(p -> p.supports(category)) // 1. 현재 카테고리를 지원하는 Service 찾음
                 .findFirst() // 2. 가장 먼저 매칭되는 Service 선택

@@ -21,7 +21,7 @@ public class TmdbSearchService implements SearchProvider {
 
     @Override
     public boolean supports(Category category) {
-        return category == Category.TV || category == Category.MOVIE || category == Category.ALL;
+        return category == Category.TV || category == Category.MOVIE || category == Category.ANIME_MOVIE || category == Category.ANIME_TVA|| category == Category.ANIME || category == Category.ALL;
     }
 
     @Override
@@ -54,16 +54,25 @@ public class TmdbSearchService implements SearchProvider {
             .map(item -> {
                 boolean isMovie = "movie".equals(item.getMediaType());
 
+                // Genre ID 리스트에 16(애니메이션)이 포함되어 있는지 확인
+                boolean isAnimation = item.getGenreIds() != null && item.getGenreIds().contains(16);
+
+                // 카테고리 지정
+                Category itemCategory;
+                if (isAnimation) {
+                    // 애니메이션인 경우
+                    itemCategory = isMovie ? Category.ANIME_MOVIE : Category.ANIME_TVA;
+                } else {
+                    // 실사인 경우
+                    itemCategory = isMovie ? Category.MOVIE : Category.TV;
+                }
                 // 1. 제목 : 영화는 title, 드라마는 name 필드 사용
                 String title = isMovie ? item.getTitle() : item.getName();
                 
-                // 2. 개봉일/방영일 : 영환s release_date, 드라마는 first_air_date
+                // 2. 개봉일/방영일 : 영화는 release_date, 드라마는 first_air_date
                 String date = isMovie ? item.getReleaseDate() : item.getFirstAirDate();
 
-                // 3. 실제 아이템의 카테고리 결정 (아이템 자체의 mediaType 우선)
-                Category itemCategory = isMovie ? Category.MOVIE : Category.TV;
-
-                // 4. 포스터 이미지
+                // 3. 포스터 이미지
                 // 포스터 경로는 앞에 tmdb 기본 url 붙여야 이미지가 보임
                 String fullThumbnailUrl = (item.getPosterPath() != null)
                                             ? "https://image.tmdb.org/t/p/w500" + item.getPosterPath()

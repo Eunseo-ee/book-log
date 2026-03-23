@@ -19,6 +19,9 @@ public class TmdbResponse {
         
         private String title;       // 영화 제목
         private String name;        // TV 제목
+
+        @JsonProperty("genre_ids")
+        private List<Integer> genreIds;
         
         @JsonProperty("poster_path")
         private String posterPath;
