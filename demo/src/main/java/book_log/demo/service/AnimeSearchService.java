@@ -19,7 +19,7 @@ public class AnimeSearchService implements SearchProvider {
 
     @Override
     public boolean supports(Category category) {
-        return category == Category.ANIME;
+        return category == Category.ANIME || category == Category.ALL;
     }
 
     @Override

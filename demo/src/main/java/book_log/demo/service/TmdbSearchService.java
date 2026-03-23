@@ -21,7 +21,7 @@ public class TmdbSearchService implements SearchProvider {
 
     @Override
     public boolean supports(Category category) {
-        return category == Category.DRAMA || category == Category.MOVIE;
+        return category == Category.TV || category == Category.MOVIE || category == Category.ALL;
     }
 
     @Override
@@ -61,7 +61,7 @@ public class TmdbSearchService implements SearchProvider {
                 String date = isMovie ? item.getReleaseDate() : item.getFirstAirDate();
 
                 // 3. 실제 아이템의 카테고리 결정 (아이템 자체의 mediaType 우선)
-                Category itemCategory = isMovie ? Category.MOVIE : Category.DRAMA;
+                Category itemCategory = isMovie ? Category.MOVIE : Category.TV;
 
                 // 4. 포스터 이미지
                 // 포스터 경로는 앞에 tmdb 기본 url 붙여야 이미지가 보임
