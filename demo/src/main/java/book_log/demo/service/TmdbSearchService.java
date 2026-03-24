@@ -5,13 +5,17 @@ import book_log.demo.domain.Category;
 import book_log.demo.dto.response.TmdbResponse;
 import book_log.demo.dto.response.UnifiedSearchResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j // log 변수 사용할 수 있게 함
 @Service
 @RequiredArgsConstructor
 public class TmdbSearchService implements SearchProvider {
@@ -28,20 +32,32 @@ public class TmdbSearchService implements SearchProvider {
     public List<UnifiedSearchResponse> search(Category category, String query) {
         // 1. 헤더 설정
         HttpHeaders headers = new HttpHeaders();
-
-        // TMDB는 'Bearer' 방식 사용
         headers.set("Authorization", "Bearer " + apiConfig.getTmdbToken());
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        // 2. Multi 검색 URL 설정 (영화/드라마 구분 없이 한번에 검색)
-        String url = "https://api.themoviedb.org/3/search/multi?query="
-                        +query+"&language=ko-KR";
-        
-        // 3. API 호출
-        ResponseEntity<TmdbResponse> response = restTemplate.exchange(url, HttpMethod.GET, entity, TmdbResponse.class);
+        // 2. Multi 검색 URL 설정
+        String url = "https://api.themoviedb.org/3/search/multi?query=" + query + "&language=ko-KR";
 
-        return mapToResponse(response.getBody(), category);
+        try {
+            // 3. API 호출 (타임아웃 발생 시 catch로 이동)
+            ResponseEntity<TmdbResponse> response = restTemplate.exchange(url, HttpMethod.GET, entity, TmdbResponse.class);
+
+            // 4. 응답 데이터 검증 (결과가 아예 없거나 body가 null인 경우)
+            if (response.getBody() == null || response.getBody().getResults() == null) {
+                return Collections.emptyList();
+            }
+
+            // 5. 정상 매핑 및 반환
+            return mapToResponse(response.getBody(), category);
+
+        } catch (Exception e) {
+            // 🚨 API 서버 장애, 타임아웃, 네트워크 단절 시 실행됨
+            log.error("TMDB API 호출 중 예외 발생 [query: {}]: {}", query, e.getMessage());
+            
+            // 에러가 나도 서버를 중단하지 않고 빈 리스트를 반환하여 서비스 유지
+            return Collections.emptyList();
+        }
     }
 
     private List<UnifiedSearchResponse>mapToResponse(TmdbResponse body, Category category) {
