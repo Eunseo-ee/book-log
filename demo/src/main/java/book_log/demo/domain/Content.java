@@ -1,13 +1,14 @@
 package book_log.demo.domain;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import java.time.LocalDate;
 
 @Entity
-@Getter @NoArgsConstructor
-
+@Getter 
+@NoArgsConstructor(access = AccessLevel.PROTECTED) // 기본 생성자 접근 제한
+@AllArgsConstructor // 빌더를 위한 전체 생성자
+@Builder
 public class Content {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -26,4 +27,24 @@ public class Content {
 
     private Double rating;
     private LocalDate viewDate;
+
+    @Column(columnDefinition = "TEXT")
+    private String comment; // 사용자의 상세 감상평 (길어질 수 있으므로 TEXT)
+
+    private String genre;
+
+    private Integer runtime; // 영화/애니의 경우 상영 시간(분), 도서의 경우 페이지 수
+
+    // 비즈니스 로직 : 상태나 평점을 변경해야 할 때 사용
+    public void updateStatus(Status status) {
+        this.status = status;
+    }
+
+    public void updateRating(Double rating) {
+        this.rating = rating;
+    }
+
+    public void updateComment(String comment) {
+        this.comment = comment;
+    }
 }
