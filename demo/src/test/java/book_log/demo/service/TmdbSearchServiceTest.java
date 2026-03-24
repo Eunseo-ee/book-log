@@ -120,4 +120,38 @@ public class TmdbSearchServiceTest {
         List<UnifiedSearchResponse> results = tmdbSearchService.search(Category.ALL, "test");
         assertThat(results.get(0).getCategory()).isEqualTo(Category.MOVIE);
     }
+
+    @Test
+    @DisplayName("API 호출 시 타임아웃(ResourceAccessException)이 발생하면 빈 리스트를 반환해야 한다")
+    void timeoutHandlingTest() {
+        // given: restTemplate 호출 시 강제로 타임아웃 예외(ResourceAccessException)를 던지도록 설정
+        when(apiConfig.getTmdbToken()).thenReturn("test-token");
+        
+        // 실제 네트워크 지연 대신 Mockito가 예외를 던지게 만듭니다.
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
+                .thenThrow(new org.springframework.web.client.ResourceAccessException("Timeout occurred"));
+
+        // when: 서비스 호출
+        List<UnifiedSearchResponse> results = tmdbSearchService.search(Category.ALL, "타임아웃테스트");
+
+        // then: 에러가 터지지 않고 빈 리스트가 돌아오는지 확인 (우리가 짠 try-catch 덕분!)
+        assertThat(results).isEmpty();
+        // 로그가 남았는지 확인하는 코드는 복잡하니, 결과값이 빈 리스트인 것만 확인해도 충분합니다!
+    }
+
+    @Test
+    @DisplayName("API 서버가 500 에러를 던져도 서버가 터지지 않고 빈 리스트를 반환해야 한다")
+    void apiServerErrorHandlingTest() {
+        // given: 500 에러 상황 모사
+        when(apiConfig.getTmdbToken()).thenReturn("test-token");
+        
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
+                .thenThrow(new org.springframework.web.client.HttpServerErrorException(org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR));
+
+        // when
+        List<UnifiedSearchResponse> results = tmdbSearchService.search(Category.ALL, "서버에러테스트");
+
+        // then
+        assertThat(results).isEmpty();
+    }
 }
