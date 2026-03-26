@@ -9,7 +9,7 @@ import java.time.LocalDate;
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // 기본 생성자 접근 제한
 @AllArgsConstructor // 빌더를 위한 전체 생성자
 @Builder
-public class Content {
+public class Content extends BaseTimeEntity{
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
