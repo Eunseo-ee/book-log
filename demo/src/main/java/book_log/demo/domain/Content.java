@@ -47,4 +47,11 @@ public class Content extends BaseTimeEntity{
     public void updateComment(String comment) {
         this.comment = comment;
     }
+
+    @OneToMany(mappedBy = "content", cascade = CascadeType.ALL, orphanRemoval = true)
+    // cascade : 영속성 전이 (그 안에 저장한 것도 같이 삭제)
+    // orphanRemoval = true : 리스트에서 문장 하나 빼면 DB에서도 지워지게 함
+    @Builder.Default
+    // @Builder.Default : 빌더 초기화 객체. null 되지 않게 기본값 지킴
+    private java.util.List<Highlight> highlights = new java.util.ArrayList<>();
 }
