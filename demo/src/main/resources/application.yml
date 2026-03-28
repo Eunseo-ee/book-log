@@ -3,3 +3,25 @@ spring:
     name: demo
   profiles:
     include: api-key  # application-api-key.yml 가져옴
+    
+  # 데이터베이스 설정 (H2 메모리 DB)
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  # H2 콘솔 설정 (브라우저에서 DB 확인용)
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  # JPA / Hibernate 설정
+  jpa:
+    hibernate:
+      ddl-auto: update # 엔티티 기반으로 테이블 자동 생성
+    show-sql: true     # 실행되는 SQL을 터미널에 출력
+    properties:
+      hibernate:
+        format_sql: true # SQL을 보기 좋게 정렬
