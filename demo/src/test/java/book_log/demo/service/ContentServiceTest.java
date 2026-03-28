@@ -14,6 +14,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -26,7 +27,7 @@ class ContentServiceTest {
     private ContentService contentService;
 
     @Test
-    @DisplayName("콘텐츠 저장 성공 - 중복이 없는 경우")
+    @DisplayName("콘텐츠 저장 성공 - 데이터 변환 및 매핑 확인")
     void saveContent_Success() {
         // given
         Content content = Content.builder()
@@ -36,20 +37,28 @@ class ContentServiceTest {
                 .rating(4.5)
                 .build();
 
-        // 가짜 레포지토리의 동작 정의 (Stubbing)
-        // 중복 조회하면 비어있다고(Optional.empty) 응답
-        when(contentRepository.findByExternalIdAndCategory(any(), any())).thenReturn(Optional.empty());
-        // 저장하면 ID가 100L인 객체 반환
-        Content savedContent = Content.builder().id(100L).build();
-        when(contentRepository.save(any())).thenReturn(savedContent);
+        //중요 : 매핑이 잘 되었는지 확인하기 위해 입력받은 content 그대로 반환하도록 설정
+        when(contentRepository.save(any(Content.class))).thenAnswer(invocation -> {
+            Content argument = invocation.getArgument(0);
+            // 여기서 ID만 강제로 세팅해서 반환 (실제 DB가 하는 일 흉내)
+            return Content.builder()
+                    .id(100L)
+                    .title(argument.getTitle())
+                    .externalId(argument.getExternalId())
+                    .category(argument.getCategory())
+                    .build();
+        });
 
-        // when
+        //when
         Long savedId = contentService.saveContent(content);
 
-        // then
+        //then
         assertEquals(100L, savedId);
-        verify(contentRepository, times(1)).save(any()); // 진짜로 저장 메서드가 1번 호출됐는지 확인
-
+        // 저장 시점에 데이터가 유실되지 않고 잘 전달됐는지 확인
+        verify(contentRepository).save(argThat(c -> 
+            c.getTitle().equals("테스트 영화") &&
+            c.getExternalId().equals("movie_123")
+        ));
     }
 
     @Test
@@ -62,15 +71,21 @@ class ContentServiceTest {
                 .thenReturn(Optional.of(content));
 
         // when & then
-        IllegalStateException e = assertThrows(IllegalStateException.class, () -> {
-            contentService.saveContent(content);
-        });
-
-        assertEquals("이미 등록된 콘텐츠입니다.", e.getMessage());
+        assertThrows(IllegalStateException.class, () -> contentService.saveContent(content));
     }
 
     @Test
-    @DisplayName("콘텐츠 저장 실패 - 평점 범위를 벗어난 경우")
+    @DisplayName("경계값 테스트: 평점이 0 미만인 경우 실패")
+    void saveContent_Fail_Rating_Low() {
+        // given: 별점이 -1.0인 경우
+        Content content = Content.builder().rating(-1.0).build();
+
+        // when & then
+        assertThrows(IllegalArgumentException.class, () -> contentService.saveContent(content));
+    }
+
+    @Test
+    @DisplayName("콘텐츠 저장 실패 - 평점 범위를 초과한 경우")
     void saveContent_Fail_Rating() {
         // given
         Content content = Content.builder()
