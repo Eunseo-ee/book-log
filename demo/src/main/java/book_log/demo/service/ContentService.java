@@ -2,8 +2,13 @@ package book_log.demo.service;
 
 import book_log.demo.domain.Category;
 import book_log.demo.domain.Content;
+import book_log.demo.dto.response.ContentResponseDto;
 import book_log.demo.repository.ContentRepository;
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,6 +47,31 @@ public class ContentService {
         if (rating != null && (rating < 0 || rating > 5)) {
             throw new IllegalArgumentException("평점은 0점과 5점의 사이여야 합니다.");
         }
+    }
+
+    @Transactional(readOnly = true)
+    public List<ContentResponseDto> getFilteredContents(Integer year, Category category) {
+        
+        List<Content> contents;
+
+        if (year != null && category != null) {
+            // 둘 다 있을 때
+            contents = contentRepository.findByYearAndCategory(year, category);
+        } else if (year != null) {
+            // 연도만 있을 때
+            contents = contentRepository.findByYear(year);
+        } else if (category != null) {
+            // 카테고리만 있을 때
+            contents = contentRepository.findByCategory(category);
+        } else {
+            // 아무 조건 없을 때(전체 조회)
+            contents = contentRepository.findAll();
+        }
+
+        return contents.stream()
+                .map(ContentResponseDto::new)
+                .collect(Collectors.toList());
+
     }
 
 }
