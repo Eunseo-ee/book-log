@@ -2,12 +2,14 @@ package book_log.demo.controller;
 
 import book_log.demo.domain.Category;
 import book_log.demo.domain.Content;
+import book_log.demo.dto.response.ContentResponseDto;
 import book_log.demo.service.ContentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.List;
 
 @RestController // JSON 데이터 주고받는 API 컨트롤러임을 선언
 @RequestMapping("/api/contents")
@@ -42,5 +44,15 @@ public class ContentController {
             boolean isSaved = contentService.isAlreadySaved(externalId, category);
             return ResponseEntity.ok(isSaved);
         }
+
+    @GetMapping("/filter")
+    public ResponseEntity<List<ContentResponseDto>> getFilteredContents(
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Category category) {
+
+                List<ContentResponseDto> response = contentService.getFilteredContents(year, category);
+
+                return ResponseEntity.ok(response);
+            }
 
 }
