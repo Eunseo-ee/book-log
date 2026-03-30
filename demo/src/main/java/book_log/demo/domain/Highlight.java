@@ -17,15 +17,26 @@ public class Highlight extends BaseTimeEntity{
     @Column(columnDefinition = "TEXT", nullable = false)
     private String text;
 
-    private Integer page;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "content_id")
     private Content content;
 
+    private Integer page;
+    private Integer season;
+    private Integer episode;
+    private String timestamp;
+
     //연관관계 편의 메서드
     public void setContent(Content content) {
         this.content = content;
+    }
+
+    public void update(String text, Integer page, Integer season, Integer episode, String timestamp) {
+        this.text = text;
+        this.page = page;
+        this.season = season;
+        this.episode = episode;
+        this.timestamp = timestamp;
     }
 
 }
