@@ -2,8 +2,10 @@ package book_log.demo.controller;
 
 import book_log.demo.domain.Category;
 import book_log.demo.domain.Content;
+import book_log.demo.dto.request.ContentRequestDto;
 import book_log.demo.dto.response.ContentResponseDto;
 import book_log.demo.service.ContentService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,9 +25,9 @@ public class ContentController {
      * 외부 API에서 가져온 정보나 직접 입력한 정보를 DB에 저장
      */
     @PostMapping
-    public ResponseEntity<Long> saveContent(@RequestBody Content content) {
+    public ResponseEntity<Long> saveContent(@Valid @RequestBody ContentRequestDto requestDto) {
         // @RequestBody : 클라이언트가 보낸 JSON 데이터를 Content 객체로 변환
-        Long savedId = contentService.saveContent(content);
+        Long savedId = contentService.saveContent(requestDto);
 
         // 생성 성공 시 201 Created 상태 코드와 저장된 리소스의 경로 반환
         return ResponseEntity.created(URI.create("/api/contents/" + savedId)).body(savedId);

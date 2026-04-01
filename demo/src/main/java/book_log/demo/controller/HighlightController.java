@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import book_log.demo.dto.request.HighlightRequestDto;
 import book_log.demo.service.HighlightService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -21,12 +22,12 @@ public class HighlightController {
     private final HighlightService highlightService;
 
     @PostMapping
-    public ResponseEntity<Long> save(@RequestBody HighlightRequestDto requestDto) {
+    public ResponseEntity<Long> save(@Valid @RequestBody HighlightRequestDto requestDto) {
         return ResponseEntity.ok(highlightService.saveHighlight(requestDto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Long> update(@PathVariable Long id, @RequestBody HighlightRequestDto requestDto) {
+    public ResponseEntity<Long> update(@PathVariable Long id, @Valid @RequestBody HighlightRequestDto requestDto) {
         return ResponseEntity.ok(highlightService.updateHighlight(id, requestDto));
     }
 
