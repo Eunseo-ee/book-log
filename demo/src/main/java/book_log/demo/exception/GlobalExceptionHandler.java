@@ -22,4 +22,18 @@ public class GlobalExceptionHandler {
         ErrorResponse response = new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage());
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
+
+    // 3. @Valid 유효성 검사 실패 시 발생하는 예외 처리
+    @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
+    public ResponseEntity<java.util.Map<String, String>> handleValidationExceptions(org.springframework.web.bind.MethodArgumentNotValidException ex) {
+
+        java.util.Map<String, String> errors = new java.util.HashMap<>();
+
+        ex.getBindingResult().getFieldErrors().forEach(error -> {
+            errors.put(error.getField(), error.getDefaultMessage());
+        });
+
+        return ResponseEntity.badRequest().body(errors);
+
+    }
 }
