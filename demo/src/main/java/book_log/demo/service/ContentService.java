@@ -2,6 +2,7 @@ package book_log.demo.service;
 
 import book_log.demo.domain.Category;
 import book_log.demo.domain.Content;
+import book_log.demo.dto.request.ContentRequestDto;
 import book_log.demo.dto.response.ContentResponseDto;
 import book_log.demo.repository.ContentRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,27 +27,17 @@ public class ContentService {
 
     // 콘텐츠 저장 (중복 체크 및 유효성 검사 포함)
     @Transactional
-    public Long saveContent(Content content) {
-        // 1. 중복 저장 확인 로직
-        validateDuplicateContent(content);
+    public Long saveContent(ContentRequestDto requestDto) {
+        // 중복 체크
+        if (isAlreadySaved(requestDto.getExternalId(), requestDto.getCategory())) {
+            throw new IllegalStateException("이미 저장된 콘텐츠입니다.");
+        }
 
-        // 2. 평점 유효성 검사(0~5 사이인지)
-        validateRating(content.getRating());
+        // DTO를 엔티티로 변환
+        Content content = requestDto.toEntity();
 
         // 3. 저장 후 생성된 ID 반환
         return contentRepository.save(content).getId();
-    }
-
-    private void validateDuplicateContent(Content content) {
-        if (isAlreadySaved(content.getExternalId(), content.getCategory())) {
-            throw new IllegalStateException("이미 등록된 콘텐츠입니다.");
-        }
-    }
-    
-    private void validateRating(Double rating) {
-        if (rating != null && (rating < 0 || rating > 5)) {
-            throw new IllegalArgumentException("평점은 0점과 5점의 사이여야 합니다.");
-        }
     }
 
     @Transactional(readOnly = true)
