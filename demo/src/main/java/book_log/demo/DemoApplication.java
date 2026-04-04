@@ -3,13 +3,14 @@ package book_log.demo;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 import book_log.demo.config.ApiConfig;
 
-@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
+@EnableJpaAuditing
+@SpringBootApplication
 @EnableConfigurationProperties(ApiConfig.class) // ApiConfig 사용하기 위해 추가
 public class DemoApplication {
 
