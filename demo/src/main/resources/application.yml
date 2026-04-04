@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: demo
+  profiles:
+    include: api-key  # application-api-key.yml 가져옴
