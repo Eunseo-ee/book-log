@@ -28,6 +28,10 @@ public class Content extends BaseTimeEntity{
     private Double rating;
     private LocalDate viewDate;
 
+    // 임시
+    @Column(name = "user_id")
+    private Long userId = 1L;
+
     @Column(columnDefinition = "TEXT")
     private String comment; // 사용자의 상세 감상평 (길어질 수 있으므로 TEXT)
 

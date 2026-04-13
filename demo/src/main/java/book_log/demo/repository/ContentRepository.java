@@ -32,11 +32,11 @@ public interface ContentRepository extends JpaRepository<Content, Long> {
 
     // 사이드바 미니 캘린더용 : 특정 월의 기록이 있는 날짜 리스트 조회
     @Query(value = """ 
-        SELECT DISTINCT CAST(EXTRACT(DAY FROM c.created_at) AS INTEGER)
+        SELECT DISTINCT CAST(EXTRACT(DAY FROM c.view_date) AS INTEGER)
         FROM content c 
         WHERE c.user_id = :userId 
-          AND EXTRACT(YEAR FROM c.created_at) = :year 
-          AND EXTRACT(MONTH FROM c.created_at) = :month
+          AND EXTRACT(YEAR FROM c.view_date) = :year 
+          AND EXTRACT(MONTH FROM c.view_date) = :month
         ORDER BY 1
         """, nativeQuery = true)
     List<Integer> findActiveDays(
