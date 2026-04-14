@@ -2,6 +2,9 @@ package book_log.demo.repository;
 
 import book_log.demo.domain.Category;
 import book_log.demo.domain.Content;
+import book_log.demo.dto.response.StatisticsResponse.CategoryStat;
+import book_log.demo.dto.response.StatisticsResponse.GenreStat;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -44,4 +47,24 @@ public interface ContentRepository extends JpaRepository<Content, Long> {
         @Param("year") int year,
         @Param("month") int month
     );
+
+    // 카테고리별 집계
+    @Query("SELECT new com.booklog.dto.StatisticsResponse$CategoryStat(c.category, COUNT(c)) " +
+           "FROM Content c WHERE FUNCTION('DATE_FORMAT', c.viewDate, '%Y-%m') = :yearMonth " +
+           "GROUP BY c.category")
+    List<CategoryStat> countByCategory(String yearMonth);
+
+    // 장르별 집계 (최애 장르 추출용)
+    @Query("SELECT new com.booklog.dto.StatisticsResponse$GenreStat(c.genre, COUNT(c)) " +
+           "FROM Content c WHERE FUNCTION('DATE_FORMAT', c.viewDate, '%Y-%m') = :yearMonth " +
+           "GROUP BY c.genre ORDER BY COUNT(c) DESC")
+    List<GenreStat> countByGenre(String yearMonth);
+
+    // 해당 월 평균 별점
+    @Query("SELECT AVG(c.rating) FROM Content c WHERE FUNCTION('DATE_FORMAT', c.viewDate, '%Y-%m') = :yearMonth")
+    Double getAverageRating(String yearMonth);
+
+    // 특정 월의 총 콘텐츠 수 (전월 대비 비교용)
+    @Query("SELECT COUNT(c) FROM Content c WHERE FUNCTION('DATE_FORMAT', c.viewDate, '%Y-%m') = :yearMonth")
+    long countByMonth(String yearMonth);
 }
