@@ -14,8 +14,12 @@ public class StatisticsResponse {
 
     private Double averageRating; // 해당 월 평균 별점
     private ActivityComparison activity; // 전월 대비 활동량 비교
+    private String mostActiveDay; // "Monday", "Sunday" 등
+    private String topCategory; // 이번 달 가장 많이 기록한 카테고리
+    private String tasteAnalysis; // "이번 달은 영화보다 도서에 더 몰입하셨네요!" 간단한 메시지
 
     @Getter
+    @NoArgsConstructor
     @AllArgsConstructor
     public static class CategoryStat {
         private String category;
@@ -23,6 +27,7 @@ public class StatisticsResponse {
     }
 
     @Getter
+    @NoArgsConstructor
     @AllArgsConstructor
     public static class GenreStat {
         private String genre;
