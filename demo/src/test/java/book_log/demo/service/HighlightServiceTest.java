@@ -90,4 +90,17 @@ public class HighlightServiceTest {
         verify(highlightRepository).deleteById(highlightId);
     }
 
+    @Test
+    @DisplayName("하이라이트 텍스트가 너무 길면 저장에 실패해야 한다")
+    void saveHighlight_Fail_TooLongText() {
+        // given: 1000자 이상의 긴 문자열 생성
+        String longText = "a".repeat(1001);
+        HighlightRequestDto requestDto = HighlightRequestDto.builder()
+                .contentId(1L)
+                .text(longText)
+                .build();
+
+        // when & then
+        assertThrows(IllegalArgumentException.class, () -> highlightService.saveHighlight(requestDto));
+    }
 }

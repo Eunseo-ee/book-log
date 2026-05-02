@@ -154,4 +154,29 @@ public class TmdbSearchServiceTest {
         // then
         assertThat(results).isEmpty();
     }
+
+    @Test
+    @DisplayName("API 응답 중 일부 항목의 제목이 null이어도 건너뛰고 나머지는 반환해야 한다")
+    void nullTitleItemTest() {
+        // given
+        TmdbResponse.TmdbItem badItem = new TmdbResponse.TmdbItem();
+        badItem.setTitle(null); // 제목 없음
+
+        TmdbResponse.TmdbItem goodItem = new TmdbResponse.TmdbItem();
+        goodItem.setTitle("정상 영화");
+        goodItem.setMediaType("movie");
+
+        TmdbResponse mockResponse = new TmdbResponse();
+        mockResponse.setResults(List.of(badItem, goodItem));
+
+        when(restTemplate.exchange(anyString(), any(), any(), eq(TmdbResponse.class)))
+                .thenReturn(ResponseEntity.ok(mockResponse));
+
+        // when
+        List<UnifiedSearchResponse> results = tmdbSearchService.search(Category.ALL, "test");
+
+        // then: null인 아이템은 필터링되고 1개만 반환되는지 확인
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).getTitle()).isEqualTo("정상 영화");
+    }
 }

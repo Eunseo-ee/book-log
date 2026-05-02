@@ -69,6 +69,7 @@ class ContentServiceTest {
         ContentRequestDto requestDto = ContentRequestDto.builder()
                 .externalId("movie_1")
                 .category(Category.MOVIE)
+                .rating(0.0)
                 .build();
 
         // 중복 체크 로직을 위해 mock 설정
@@ -105,5 +106,19 @@ class ContentServiceTest {
         assertThrows(IllegalArgumentException.class, () -> {
             contentService.saveContent(requestDto);
         });
+    }
+
+    @Test
+    @DisplayName("미래 날짜의 기록은 저장할 수 없다")
+    void saveContent_Fail_FutureDate() {
+        // given: 내일 날짜 설정
+        ContentRequestDto requestDto = ContentRequestDto.builder()
+            .rating(0.0)
+            .viewDate(java.time.LocalDate.now().plusDays(1))
+            .build();
+
+        // when & then
+        // (서비스 로직에 미래 날짜 체크가 있다면)
+        assertThrows(IllegalArgumentException.class, () -> contentService.saveContent(requestDto));
     }
 }
