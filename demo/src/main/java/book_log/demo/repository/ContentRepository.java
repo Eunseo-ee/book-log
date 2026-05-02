@@ -58,9 +58,10 @@ public interface ContentRepository extends JpaRepository<Content, Long> {
     // --- 통계 API용 쿼리 (인터페이스 방식이라 경로가 필요 없음!) ---
 
     // 카테고리별 집계
-    @Query("SELECT c.category as category, COUNT(c) as count " +
-           "FROM Content c WHERE TO_CHAR(c.viewDate, 'YYYY-MM') = :yearMonth " +
-           "GROUP BY c.category")
+    @Query("SELECT STR(c.category) as category, COUNT(c) as count " +
+       "FROM Content c WHERE TO_CHAR(c.viewDate, 'YYYY-MM') = :yearMonth " +
+       "GROUP BY c.category " +
+       "ORDER BY COUNT(c) DESC")
     List<CategoryStatInterface> countByCategoryInterface(@Param("yearMonth") String yearMonth);
 
     // 장르별 집계

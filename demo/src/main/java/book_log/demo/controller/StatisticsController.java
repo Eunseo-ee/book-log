@@ -1,5 +1,6 @@
 package book_log.demo.controller;
 
+import java.time.DateTimeException;
 import java.time.LocalDate;
 
 import org.springframework.http.ResponseEntity;
@@ -29,9 +30,9 @@ public class StatisticsController {
             @RequestParam(name = "year", required = false) Integer year,
             @RequestParam(name = "month", required = false) Integer month) {
                 
-                // 간단한 파라미터 검증 (선택 사항)
+                // 간단한 파라미터 검증
                 if (month < 1 || month > 12) {
-                    return ResponseEntity.badRequest().build();
+                    throw new DateTimeException("월은 1-12 사이여야 합니다.");
                 }
 
                 // 값이 없으면 현재 날짜 기준
