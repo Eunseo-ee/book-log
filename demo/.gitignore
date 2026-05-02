@@ -38,3 +38,6 @@ out/
 
 # API 키 설정 파일 제외
 src/main/resources/application-api-key.yml
+
+# db 설정 파일 제외
+src/main/resources/application.yml
