@@ -49,6 +49,7 @@ public class ContentRequestDto {
                 .authorOrDirector(this.authorOrDirector)
                 .thumbnailUrl(this.thumbnailUrl)
                 .externalId(this.externalId)
+                .category(this.category)
                 .genre(this.genre)
                 .viewDate(this.viewDate) // 사용자가 입력한 날짜
                 .rating(this.rating)     // 사용자가 입력한 별점
