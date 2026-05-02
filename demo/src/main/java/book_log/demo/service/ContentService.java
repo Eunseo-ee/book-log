@@ -7,6 +7,7 @@ import book_log.demo.dto.response.ContentResponseDto;
 import book_log.demo.repository.ContentRepository;
 import lombok.RequiredArgsConstructor;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,7 +29,17 @@ public class ContentService {
     // 콘텐츠 저장 (중복 체크 및 유효성 검사 포함)
     @Transactional
     public Long saveContent(ContentRequestDto requestDto) {
-        // 중복 체크
+        // 1. 평점 검증 (추가!)
+        if (requestDto.getRating() < 0 || requestDto.getRating() > 5.0) {
+            throw new IllegalArgumentException("평점은 0에서 5 사이여야 합니다.");
+        }
+
+        // 2. 미래 날짜 검증 (추가!)
+        if (requestDto.getViewDate() != null && requestDto.getViewDate().isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("미래 날짜의 기록은 저장할 수 없습니다.");
+        }
+
+        // 3. 중복 체크
         if (isAlreadySaved(requestDto.getExternalId(), requestDto.getCategory())) {
             throw new IllegalStateException("이미 저장된 콘텐츠입니다.");
         }
