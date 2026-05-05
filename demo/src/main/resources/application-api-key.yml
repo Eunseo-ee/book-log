@@ -1,0 +1,7 @@
+api:
+  kakao-key: "92e97795290efdb46a08e724d6fcb405" # 카카오 REST API 키
+  tmdb-token: "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI1NTUyYmZmNzYyOGViNTc3MGRkMzEwMzZmN2MzZjc5YyIsIm5iZiI6MTc3MzQ3ODA2OC40OTEwMDAyLCJzdWIiOiI2OWI1MjBiNGQ1YzAxOTg5Zjc5NWViNDQiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.WVpH_-jj9isBZbWKIj3BM0YWdqCBu9FIp86m9vbwvjA"         # TMDB 액세스 토큰
+
+spring:
+  datasource:
+    password: "toothag0624!"
