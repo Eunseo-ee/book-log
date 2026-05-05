@@ -1,0 +1,8 @@
+/gradlew text eol=lf
+*.bat text eol=crlf
+*.jar binary
+
+demo/** linguist-documentation=false
+demo/** linguist-vendored=false
+frontend/** linguist-documentation=false
+frontend/** linguist-vendored=false
