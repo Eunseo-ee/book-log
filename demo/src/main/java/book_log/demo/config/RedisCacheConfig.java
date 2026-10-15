@@ -19,6 +19,9 @@ public class RedisCacheConfig {
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
+                // 캐시 무효화 정책: TTL 만료에 맡긴다.
+                // 캐싱 대상(TMDB 검색 결과)은 우리 서비스가 수정하지 않는 외부 데이터라 @CacheEvict가 필요 없고,
+                // 10분 정도의 최신성 지연은 검색 용도에서 허용 가능하다.
                 .entryTtl(Duration.ofMinutes(10))
                 .disableCachingNullValues()
                 .serializeKeysWith(RedisSerializationContext.SerializationPair

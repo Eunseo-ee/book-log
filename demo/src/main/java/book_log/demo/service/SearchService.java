@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import book_log.demo.domain.Category;
 import book_log.demo.dto.response.UnifiedSearchResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
 
 @Service
 @RequiredArgsConstructor
@@ -18,7 +17,8 @@ public class SearchService {
     // SearchProvider 인터페이스를 구현한 모든 클래스(Kakao, Tmdb, Anime 등)가 자동으로 리스트에 담김
     private final List<SearchProvider> providers;
 
-    @Cacheable(cacheNames = "search", key = "#category + '_' + #query")
+    // 캐싱은 여기(조합 결과)가 아니라 Provider 단위에서 한다. (TmdbSearchService.search 참고)
+    // ALL 검색도 내부에서 각 Provider를 호출하므로, TMDB 부분은 자동으로 캐시를 탄다.
     public List<UnifiedSearchResponse> search(Category category, String query) {
         // 1. 통합 검색 (ALL)인 경우
         if (category == Category.ALL) {
