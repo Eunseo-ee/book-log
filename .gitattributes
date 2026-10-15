@@ -1,4 +1,4 @@
-/gradlew text eol=lf
+demo/gradlew text eol=lf
 *.bat text eol=crlf
 *.jar binary
 
