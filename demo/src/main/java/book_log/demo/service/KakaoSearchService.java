@@ -59,6 +59,7 @@ public class KakaoSearchService implements SearchProvider {
                             : "날짜 정보 없음";
 
                     return UnifiedSearchResponse.builder()
+                            .externalId(pickIsbn(doc.getIsbn()))
                             .title(doc.getTitle())
                             .authorOrDirector(authors)
                             .releaseDate(date)           // UnifiedSearchResponse에 추가한 필드 활용
@@ -67,4 +68,19 @@ public class KakaoSearchService implements SearchProvider {
                             .build();
                 }).collect(Collectors.toList());
             }
+
+    /**
+     * 카카오 isbn은 "ISBN10 ISBN13" 처럼 공백으로 구분되어 오며, 둘 중 하나만 올 수도 있다.
+     * 저장 여부 판별용 externalId는 하나로 정해야 하므로 국제 표준인 ISBN13을 우선 사용하고,
+     * ISBN13이 없을 때만 ISBN10을 그대로 쓴다. 값이 비어 있으면 null.
+     */
+    static String pickIsbn(String isbn) {
+        if (isbn == null || isbn.isBlank()) return null;
+
+        String[] tokens = isbn.trim().split("\\s+");
+        for (String token : tokens) {
+            if (token.length() == 13) return token;
+        }
+        return tokens[0];
+    }
 }

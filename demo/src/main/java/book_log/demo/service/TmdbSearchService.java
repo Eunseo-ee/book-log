@@ -103,7 +103,12 @@ public class TmdbSearchService implements SearchProvider {
                                             ? "https://image.tmdb.org/t/p/w500" + item.getPosterPath()
                                             : null;
 
+                // 4. 외부 ID : TMDB id (영화/드라마 id는 서로 별개 번호 체계라 category와 함께 써야 유일함)
+                // String.valueOf(null Long)은 "null" 문자열이 되므로 null 체크 필수
+                String externalId = (item.getId() != null) ? String.valueOf(item.getId()) : null;
+
                 return UnifiedSearchResponse.builder()
+                        .externalId(externalId)
                         .title(title)
                         .authorOrDirector("상세 정보 참조")
                         .releaseDate(date)

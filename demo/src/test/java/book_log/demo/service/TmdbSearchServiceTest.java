@@ -179,4 +179,46 @@ public class TmdbSearchServiceTest {
         assertThat(results).hasSize(1);
         assertThat(results.get(0).getTitle()).isEqualTo("정상 영화");
     }
+
+    @Test
+    @DisplayName("TMDB id가 externalId(문자열)로 매핑되고, isSaved는 Provider에서 채우지 않는다")
+    void externalIdMappedFromTmdbId() {
+        when(apiConfig.getTmdbToken()).thenReturn("test-token");
+
+        TmdbResponse.TmdbItem mockItem = new TmdbResponse.TmdbItem();
+        mockItem.setId(550L);
+        mockItem.setMediaType("movie");
+        mockItem.setTitle("파이트 클럽");
+
+        TmdbResponse mockResponse = new TmdbResponse();
+        mockResponse.setResults(List.of(mockItem));
+
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
+                .thenReturn(ResponseEntity.ok(mockResponse));
+
+        List<UnifiedSearchResponse> results = tmdbSearchService.search(Category.ALL, "파이트 클럽");
+
+        assertThat(results.get(0).getExternalId()).isEqualTo("550");
+        assertThat(results.get(0).getIsSaved()).isNull();
+    }
+
+    @Test
+    @DisplayName("TMDB id가 null이면 externalId는 문자열 \"null\"이 아니라 null이어야 한다")
+    void nullTmdbId_givesNullExternalId() {
+        when(apiConfig.getTmdbToken()).thenReturn("test-token");
+
+        TmdbResponse.TmdbItem mockItem = new TmdbResponse.TmdbItem();
+        mockItem.setMediaType("movie");
+        mockItem.setTitle("id 없는 영화");
+
+        TmdbResponse mockResponse = new TmdbResponse();
+        mockResponse.setResults(List.of(mockItem));
+
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
+                .thenReturn(ResponseEntity.ok(mockResponse));
+
+        List<UnifiedSearchResponse> results = tmdbSearchService.search(Category.ALL, "test");
+
+        assertThat(results.get(0).getExternalId()).isNull();
+    }
 }
