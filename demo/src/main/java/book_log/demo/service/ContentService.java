@@ -8,7 +8,9 @@ import book_log.demo.repository.ContentRepository;
 import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -21,9 +23,22 @@ public class ContentService {
     
     private final ContentRepository contentRepository;
 
+    // 저장된 콘텐츠를 식별하는 키 (externalId만으로는 TMDB 영화/드라마 id가 겹칠 수 있어 category와 함께 사용)
+    public record SavedKey(String externalId, Category category) {}
+
     // UI에서 '저장됨' 표시를 하기 위해 저장 여부만 확인하는 메서드
     public boolean isAlreadySaved(String externalId, Category category) {
         return contentRepository.findByExternalIdAndCategory(externalId, category).isPresent();
+    }
+
+    // 검색 결과 여러 건의 '저장됨' 표시용: 주어진 externalId 중 DB에 있는 (externalId, category) 쌍을 한 번에 반환
+    public Set<SavedKey> findSavedKeys(Collection<String> externalIds) {
+        if (externalIds == null || externalIds.isEmpty()) {
+            return Set.of(); // 빈 IN 절 쿼리 방지
+        }
+        return contentRepository.findByExternalIdIn(externalIds).stream()
+                .map(k -> new SavedKey(k.getExternalId(), k.getCategory()))
+                .collect(Collectors.toSet());
     }
 
     // 콘텐츠 저장 (중복 체크 및 유효성 검사 포함)
