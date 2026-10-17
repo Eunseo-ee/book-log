@@ -58,4 +58,10 @@ public class Content extends BaseTimeEntity{
     @Builder.Default
     // @Builder.Default : 빌더 초기화 객체. null 되지 않게 기본값 지킴
     private java.util.List<Highlight> highlights = new java.util.ArrayList<>();
+
+        // 연관관계 편의 메서드: 양쪽(content.highlights, highlight.content)을 한 번에 연결
+    public void addHighlight(Highlight highlight) {
+        this.highlights.add(highlight);
+        highlight.setContent(this);
+    }
 }

@@ -127,8 +127,8 @@ class HighlightRepositoryTest {
         Content content = contentRepository.save(Content.builder().title("지워질 책").build());
         Highlight highlight = Highlight.builder()
             .text("함께 지워질까?")
-            .content(content) // 여기서 content는 이제 'Saved' 상태입니다.
             .build();
+        content.addHighlight(highlight); // 양쪽 연결 (content.highlights에 들어가야 cascade가 동작)
 
         highlightRepository.save(highlight);
 
