@@ -2,6 +2,7 @@ package book_log.demo.service;
 
 import book_log.demo.config.ApiConfig;
 import book_log.demo.domain.Category;
+import book_log.demo.dto.response.SearchResponse;
 import book_log.demo.dto.response.TmdbResponse;
 import book_log.demo.dto.response.UnifiedSearchResponse;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,7 @@ public class TmdbSearchService implements SearchProvider {
     }
 
     @Override
-    public List<UnifiedSearchResponse> search(Category category, String query) {
+    public SearchResponse search(Category category, String query, int page) {
         // 1. 헤더 설정
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + apiConfig.getTmdbToken());
@@ -37,62 +38,64 @@ public class TmdbSearchService implements SearchProvider {
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
         // 2. Multi 검색 URL 설정
-        String url = "https://api.themoviedb.org/3/search/multi?query=" + query + "&language=ko-KR";
+        String url = "https://api.themoviedb.org/3/search/multi?query=" + query + "&language=ko-KR&page=" + page;
 
         try {
-            // 3. API 호출 (타임아웃 발생 시 catch로 이동)
+            // 3. API 호출
             ResponseEntity<TmdbResponse> response = restTemplate.exchange(url, HttpMethod.GET, entity, TmdbResponse.class);
+            TmdbResponse body = response.getBody();
 
-            // 4. 응답 데이터 검증 (결과가 아예 없거나 body가 null인 경우)
-            if (response.getBody() == null || response.getBody().getResults() == null) {
-                return Collections.emptyList();
+            // 4. 응답 데이터 검증
+            if (body == null || body.getResults() == null) {
+                return SearchResponse.builder()
+                        .results(Collections.emptyList())
+                        .totalPages(1)
+                        .totalResults(0)
+                        .build();
             }
 
-            // 5. 정상 매핑 및 반환
-            return mapToResponse(response.getBody(), category);
+            // 5. 정상 매핑 및 반환 (SearchResponse 박스에 담아서 반환)
+            return SearchResponse.builder()
+                    .results(mapToResponse(body, category)) // 기존 mapToResponse 활용
+                    .totalPages(body.getTotalPages())       // TMDB 응답의 total_pages 사용
+                    .totalResults(body.getTotalResults())   // TMDB 응답의 total_results 사용
+                    .build();
 
         } catch (Exception e) {
-            // 🚨 API 서버 장애, 타임아웃, 네트워크 단절 시 실행됨
             log.error("TMDB API 호출 중 예외 발생 [query: {}]: {}", query, e.getMessage());
             
-            // 에러가 나도 서버를 중단하지 않고 빈 리스트를 반환하여 서비스 유지
-            return Collections.emptyList();
+            // 에러 발생 시에도 규격에 맞는 빈 응답 반환
+            return SearchResponse.builder()
+                    .results(Collections.emptyList())
+                    .totalPages(1)
+                    .totalResults(0)
+                    .build();
         }
     }
 
-    private List<UnifiedSearchResponse>mapToResponse(TmdbResponse body, Category category) {
-
-        if (body==null || body.getResults()==null) return List.of();
+    private List<UnifiedSearchResponse> mapToResponse(TmdbResponse body, Category category) {
+        if (body == null || body.getResults() == null) return List.of();
 
         return body.getResults().stream()
-            // 인물 (person) 결과는 제외하고 영화와 드라마만 필터링
-            .filter(item->"movie".equals(item.getMediaType()) || "tv".equals(item.getMediaType()))
+            // 1. 인물 제외 (영화, TV만 남김)
+            .filter(item -> "movie".equals(item.getMediaType()) || "tv".equals(item.getMediaType()))
             .map(item -> {
                 boolean isMovie = "movie".equals(item.getMediaType());
-
-                // Genre ID 리스트에 16(애니메이션)이 포함되어 있는지 확인
                 boolean isAnimation = item.getGenreIds() != null && item.getGenreIds().contains(16);
 
-                // 카테고리 지정
+                // 데이터의 실제 성격 파악
                 Category itemCategory;
                 if (isAnimation) {
-                    // 애니메이션인 경우
                     itemCategory = isMovie ? Category.ANIME_MOVIE : Category.ANIME_TVA;
                 } else {
-                    // 실사인 경우
                     itemCategory = isMovie ? Category.MOVIE : Category.TV;
                 }
-                // 1. 제목 : 영화는 title, 드라마는 name 필드 사용
-                String title = isMovie ? item.getTitle() : item.getName();
-                
-                // 2. 개봉일/방영일 : 영화는 release_date, 드라마는 first_air_date
-                String date = isMovie ? item.getReleaseDate() : item.getFirstAirDate();
 
-                // 3. 포스터 이미지
-                // 포스터 경로는 앞에 tmdb 기본 url 붙여야 이미지가 보임
+                // DTO 빌드 (기존 로직 유지)
+                String title = isMovie ? item.getTitle() : item.getName();
+                String date = isMovie ? item.getReleaseDate() : item.getFirstAirDate();
                 String fullThumbnailUrl = (item.getPosterPath() != null)
-                                            ? "https://image.tmdb.org/t/p/w500" + item.getPosterPath()
-                                            : null;
+                        ? "https://image.tmdb.org/t/p/w500" + item.getPosterPath() : null;
 
                 return UnifiedSearchResponse.builder()
                         .title(title)
@@ -102,6 +105,22 @@ public class TmdbSearchService implements SearchProvider {
                         .thumbnailUrl(fullThumbnailUrl)
                         .category(itemCategory)
                         .build();
-            }).collect(Collectors.toList());
+            })
+            // 2. 사용자가 선택한 카테고리에 맞는 결과만 최종 필터링
+            .filter(dto -> isMatchingCategory(dto.getCategory(), category))
+            .collect(Collectors.toList());
+    }
+
+    // 카테고리 매칭 로직 분리
+    private boolean isMatchingCategory(Category itemCategory, Category requestCategory) {
+        if (requestCategory == Category.ALL) return true; // 전체 검색이면 모두 통과
+        
+        // 애니메이션 통합 카테고리 요청 시 극장판/TVA 모두 포함
+        if (requestCategory == Category.ANIME) {
+            return itemCategory == Category.ANIME_MOVIE || itemCategory == Category.ANIME_TVA;
+        }
+        
+        // 그 외 (MOVIE, TV, ANIME_MOVIE, ANIME_TVA 등) 정확히 일치하는 경우만
+        return itemCategory == requestCategory;
     }
 }

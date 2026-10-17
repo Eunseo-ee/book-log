@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import book_log.demo.domain.Category;
+import book_log.demo.dto.response.SearchResponse;
 import book_log.demo.dto.response.UnifiedSearchResponse;
 import book_log.demo.service.SearchService;
 import lombok.RequiredArgsConstructor;
@@ -27,11 +28,11 @@ public class SearchController {
      */
 
     @GetMapping
-    public ResponseEntity<List<UnifiedSearchResponse>> search(
+    public ResponseEntity<SearchResponse> search(
             @RequestParam Category category, // BOOK, MOVIE, ANIME
-            @RequestParam String query) {
+            @RequestParam String query,
+            @RequestParam(defaultValue = "1") int page) {
         
-        List<UnifiedSearchResponse> results = searchService.search(category, query);
-        return ResponseEntity.ok(results); // HTTP 200 OK와 함께 검색 결과 리스트 JSON 형태로 포장해서 내보냄
+        return ResponseEntity.ok(searchService.search(category, query, page));
     }
 }

@@ -3,6 +3,7 @@ package book_log.demo.service;
 import book_log.demo.config.ApiConfig;
 import book_log.demo.domain.Category;
 import book_log.demo.dto.response.KakaoBookResponse;
+import book_log.demo.dto.response.SearchResponse;
 import book_log.demo.dto.response.UnifiedSearchResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
@@ -26,7 +27,7 @@ public class KakaoSearchService implements SearchProvider {
 
     // 형식 맞게 API 요청 링크 세팅 -> 요청 전송
     @Override
-    public List<UnifiedSearchResponse> search(Category category, String query) {
+    public SearchResponse search(Category category, String query, int page) {
         // 1. 헤더 설정
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "KakaoAK "+apiConfig.getKakaoKey());
@@ -37,8 +38,17 @@ public class KakaoSearchService implements SearchProvider {
 
         // 3. API 호출
         ResponseEntity<KakaoBookResponse> response = restTemplate.exchange(url, HttpMethod.GET, entity, KakaoBookResponse.class);
+        KakaoBookResponse body = response.getBody();
 
-        return mapToResponse(response.getBody(), category);
+        // 전체 페이지 계산 (카카오 응답의 total_count 활용)
+        int totalCount = body.getMeta().getTotalCount();
+        int totalPages = (int) Math.ceil((double) totalCount / 20);
+
+        return SearchResponse.builder()
+            .results(mapToResponse(body, category))
+            .totalPages(totalPages)
+            .totalResults(totalCount)
+            .build();
     }
 
     private List<UnifiedSearchResponse> mapToResponse(KakaoBookResponse body, Category category) {

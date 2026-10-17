@@ -9,16 +9,23 @@ import java.util.List;
 public class TmdbResponse {
     private List<TmdbItem> results; // 검색 결과 리스트
 
-    // TMDB에서 result 안에 상세 정보를 리스트 형태로 담아놓은 구조를 자바 객체로 똑같이 복제하기 위해 TmdbResponse 안에 TmdbItem 넣음
+    // 1. 전체 페이지 수 필드 추가
+    @JsonProperty("total_pages")
+    private int totalPages;
+
+    // 2. 전체 결과 수 필드 추가
+    @JsonProperty("total_results")
+    private long totalResults;
+
     @Getter @Setter
     public static class TmdbItem {
         private Long id;
         
         @JsonProperty("media_type")
-        private String mediaType; // movie 또는 tv
+        private String mediaType; 
         
-        private String title;       // 영화 제목
-        private String name;        // TV 제목
+        private String title;       
+        private String name;        
 
         @JsonProperty("genre_ids")
         private List<Integer> genreIds;
@@ -27,14 +34,14 @@ public class TmdbResponse {
         private String posterPath;
         
         @JsonProperty("release_date")
-        private String releaseDate; // 영화 개봉일
+        private String releaseDate; 
         
         @JsonProperty("first_air_date")
-        private String firstAirDate; // TV 첫 방영일
+        private String firstAirDate; 
         
         @JsonProperty("vote_average")
-        private Double voteAverage;  // 평점
+        private Double voteAverage;  
         
-        private String overview;     // 줄거리
+        private String overview;     
     }
 }
