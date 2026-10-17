@@ -36,11 +36,8 @@ out/
 ### VS Code ###
 .vscode/
 
-# API 키 설정 파일 제외
-src/main/resources/application-api-key.yml
-
-# db 설정 파일 제외
-src/main/resources/application.yml
+demo/src/main/resources/application.yml
+demo/src/main/resources/application-api-key.yml
 
 node_modules/
 .next/

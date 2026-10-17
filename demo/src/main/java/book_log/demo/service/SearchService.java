@@ -1,6 +1,8 @@
 package book_log.demo.service;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 
@@ -9,14 +11,55 @@ import org.springframework.stereotype.Service;
 import book_log.demo.domain.Category;
 import book_log.demo.dto.response.SearchResponse;
 import book_log.demo.dto.response.UnifiedSearchResponse;
+import book_log.demo.service.ContentService.SavedKey;
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class SearchService {
     private final List<SearchProvider> providers;
+    private final ContentService contentService;
 
+    // 캐싱은 여기(조합 결과)가 아니라 Provider 단위에서 한다. (TmdbSearchService.search 참고)
+    // isSaved는 '사용자의 DB 상태'라서 10분 TTL 캐시에 넣으면 낡은 값이 보인다.
+    // 그래서 캐시를 거친 Provider 결과에 대해, 캐시 바깥(이 메서드)에서 매 요청마다 새로 채운다.
     public SearchResponse search(Category category, String query, int page) {
+        SearchResponse response = searchProviders(category, query, page);
+        return markSavedStatus(response);
+    }
+
+    // 저장 여부를 한 번의 IN 쿼리로 조회해서 결과마다 채운다.
+    // 페이지 정보는 그대로 두고 results만 교체한 새 SearchResponse를 만든다.
+    private SearchResponse markSavedStatus(SearchResponse response) {
+        List<UnifiedSearchResponse> results = response.getResults();
+        if (results == null || results.isEmpty()) {
+            return response;
+        }
+
+        List<String> externalIds = results.stream()
+                .map(UnifiedSearchResponse::getExternalId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        Set<SavedKey> savedKeys = contentService.findSavedKeys(externalIds);
+
+        List<UnifiedSearchResponse> marked = results.stream()
+                .map(r -> r.toBuilder()
+                        .isSaved(savedKeys.contains(new SavedKey(r.getExternalId(), r.getCategory())))
+                        .build())
+                .toList();
+
+        return SearchResponse.builder()
+                .results(marked)
+                .currentPage(response.getCurrentPage())
+                .totalPages(response.getTotalPages())
+                .totalResults(response.getTotalResults())
+                .build();
+    }
+
+    // Provider들을 호출해 검색 결과를 모으는 로직 (캐시 대상 구간)
+    private SearchResponse searchProviders(Category category, String query, int page) {
         // 1. 통합 검색 (ALL)인 경우
         if (category == Category.ALL) {
             return searchAll(query, page);

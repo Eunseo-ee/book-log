@@ -153,4 +153,22 @@ public class TmdbSearchServiceTest {
         // 서비스의 mapToResponse 로직에 따라 결과 개수 확인 가능
         // 만약 null 필터가 있다면 assertThat(response.getResults()).hasSize(1);
     }
+    @Test
+    @DisplayName("TMDB id가 externalId(문자열)로 매핑되고, isSaved는 Provider에서 채우지 않는다")
+    void externalIdMappedFromTmdbId() {
+        // (when / mockItem / mockResponse 부분은 그대로, 마지막 호출과 검증만 아래처럼)
+        SearchResponse response = tmdbSearchService.search(Category.ALL, "파이트 클럽", 1);
+
+        assertThat(response.getResults().get(0).getExternalId()).isEqualTo("550");
+        assertThat(response.getResults().get(0).getIsSaved()).isNull();
+    }
+
+    @Test
+    @DisplayName("TMDB id가 null이면 externalId는 문자열 \"null\"이 아니라 null이어야 한다")
+    void nullTmdbId_givesNullExternalId() {
+        // (준비 부분은 그대로)
+        SearchResponse response = tmdbSearchService.search(Category.ALL, "test", 1);
+
+        assertThat(response.getResults().get(0).getExternalId()).isNull();
+    }
 }

@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.Optional;
 import java.util.List;
 
@@ -24,10 +25,22 @@ public interface ContentRepository extends JpaRepository<Content, Long> {
         Long getCount();
     }
 
+    // 저장 여부 판별용 프로젝션: 엔티티 전체(감상평 TEXT 등) 대신 필요한 두 컬럼만 조회
+    public interface SavedKeyInterface {
+        String getExternalId();
+        Category getCategory();
+    }
+
     /**
      * 중복 저장 방지를 위한 조회 메서드
      */
     Optional<Content> findByExternalIdAndCategory(String externalId, Category category);
+
+    /**
+     * 검색 결과 여러 건의 저장 여부를 한 번의 IN 쿼리로 확인 (건별 조회 N+1 방지)
+     * externalId만 IN으로 거르고, category 일치 여부는 호출하는 쪽에서 (externalId, category) 쌍으로 판단한다.
+     */
+    List<SavedKeyInterface> findByExternalIdIn(Collection<String> externalIds);
 
     // 1. 연도+카테고리 복합 필터링
     @Query("SELECT c FROM Content c WHERE YEAR(c.viewDate) = :year AND c.category = :category")

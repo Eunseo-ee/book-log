@@ -8,6 +8,7 @@ import book_log.demo.dto.response.UnifiedSearchResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -29,6 +30,14 @@ public class TmdbSearchService implements SearchProvider {
         return category == Category.TV || category == Category.MOVIE || category == Category.ANIME_MOVIE || category == Category.ANIME_TVA|| category == Category.ANIME || category == Category.ALL;
     }
 
+    // [캐시 정책]
+    // - key는 query만 사용: TMDB 호출(search/multi)과 매핑 결과가 category와 무관하므로
+    //   ALL/MOVIE/TV/ANIME 검색이 같은 캐시 항목을 공유한다.
+    //   (나중에 category별로 결과가 달라지도록 바꾼다면 key에 category를 다시 포함해야 함)
+    // - cacheNames를 Provider 전용("tmdbSearch")으로 분리: 다른 Provider를 캐싱해도 키가 충돌하지 않게 함
+    // - 빈 리스트는 캐싱 제외(unless): 장애 시 아래 catch에서 emptyList()를 반환하므로,
+    //   그대로 캐싱되면 TTL(10분) 동안 장애 결과가 고정된다.
+    @Cacheable(cacheNames = "tmdbSearch", key = "#query", unless = "#result == null || #result.isEmpty()")
     @Override
     public SearchResponse search(Category category, String query, int page) {
         // 1. 헤더 설정
@@ -97,7 +106,12 @@ public class TmdbSearchService implements SearchProvider {
                 String fullThumbnailUrl = (item.getPosterPath() != null)
                         ? "https://image.tmdb.org/t/p/w500" + item.getPosterPath() : null;
 
+                // 4. 외부 ID : TMDB id (영화/드라마 id는 서로 별개 번호 체계라 category와 함께 써야 유일함)
+                // String.valueOf(null Long)은 "null" 문자열이 되므로 null 체크 필수
+                String externalId = (item.getId() != null) ? String.valueOf(item.getId()) : null;
+
                 return UnifiedSearchResponse.builder()
+                        .externalId(externalId)
                         .title(title)
                         .authorOrDirector("상세 정보 참조")
                         .releaseDate(date)
