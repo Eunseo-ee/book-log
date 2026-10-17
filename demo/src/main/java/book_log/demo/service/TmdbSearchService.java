@@ -30,14 +30,15 @@ public class TmdbSearchService implements SearchProvider {
         return category == Category.TV || category == Category.MOVIE || category == Category.ANIME_MOVIE || category == Category.ANIME_TVA|| category == Category.ANIME || category == Category.ALL;
     }
 
-    // [캐시 정책]
-    // - key는 query만 사용: TMDB 호출(search/multi)과 매핑 결과가 category와 무관하므로
-    //   ALL/MOVIE/TV/ANIME 검색이 같은 캐시 항목을 공유한다.
-    //   (나중에 category별로 결과가 달라지도록 바꾼다면 key에 category를 다시 포함해야 함)
+        // [캐시 정책]
+    // - key는 검색어 + 카테고리 + 페이지: mapToResponse가 요청 카테고리로 결과를 필터링하고,
+    //   TMDB가 페이지별로 다른 결과를 주므로 셋 중 하나라도 다르면 다른 캐시 항목이어야 한다.
     // - cacheNames를 Provider 전용("tmdbSearch")으로 분리: 다른 Provider를 캐싱해도 키가 충돌하지 않게 함
-    // - 빈 리스트는 캐싱 제외(unless): 장애 시 아래 catch에서 emptyList()를 반환하므로,
+    // - 결과가 비어 있으면 캐싱 제외(unless): 장애 시 아래 catch에서 빈 응답을 반환하므로,
     //   그대로 캐싱되면 TTL(10분) 동안 장애 결과가 고정된다.
-    @Cacheable(cacheNames = "tmdbSearch", key = "#query", unless = "#result == null || #result.isEmpty()")
+    @Cacheable(cacheNames = "tmdbSearch",
+            key = "#query + ':' + #category + ':' + #page",
+            unless = "#result == null || #result.results == null || #result.results.isEmpty()")
     @Override
     public SearchResponse search(Category category, String query, int page) {
         // 1. 헤더 설정
