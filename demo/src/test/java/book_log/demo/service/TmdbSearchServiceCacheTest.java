@@ -29,13 +29,16 @@ import org.springframework.web.client.RestTemplate;
 
 import book_log.demo.config.ApiConfig;
 import book_log.demo.domain.Category;
+import book_log.demo.dto.response.SearchResponse;
 import book_log.demo.dto.response.TmdbResponse;
-import book_log.demo.dto.response.UnifiedSearchResponse;
 
 /**
  * TmdbSearchService의 캐시 규칙 검증.
  * 캐시는 프록시(AOP)로 동작하므로 Mockito 단독 테스트로는 확인할 수 없고,
  * 최소한의 스프링 컨텍스트(@EnableCaching + 메모리 캐시)를 띄워서 검증한다. Redis/DB는 필요 없다.
+ *
+ * 캐시 키는 "검색어 + 카테고리 + 페이지"다.
+ * 결과가 카테고리별로 필터링되고(mapToResponse) 페이지마다 다르므로, 셋 중 하나라도 다르면 다른 캐시 항목이어야 한다.
  */
 @SpringJUnitConfig(TmdbSearchServiceCacheTest.TestConfig.class)
 class TmdbSearchServiceCacheTest {
@@ -82,27 +85,37 @@ class TmdbSearchServiceCacheTest {
     }
 
     @Test
-    @DisplayName("같은 검색어를 두 번 검색하면 TMDB는 한 번만 호출된다")
-    void sameQuery_callsTmdbOnce() {
+    @DisplayName("같은 검색어·카테고리·페이지를 두 번 검색하면 TMDB는 한 번만 호출된다")
+    void sameQueryCategoryAndPage_callsTmdbOnce() {
         stubTmdbReturns(movieResponse("엘리멘탈"));
 
-        tmdbSearchService.search(Category.MOVIE, "엘리멘탈");
-        List<UnifiedSearchResponse> second = tmdbSearchService.search(Category.MOVIE, "엘리멘탈");
+        tmdbSearchService.search(Category.MOVIE, "엘리멘탈", 1);
+        SearchResponse second = tmdbSearchService.search(Category.MOVIE, "엘리멘탈", 1);
 
-        assertThat(second).hasSize(1);
+        assertThat(second.getResults()).hasSize(1);
         verifyTmdbCalls(1);
     }
 
     @Test
-    @DisplayName("카테고리가 달라도 검색어가 같으면 캐시를 공유한다 (ALL/MOVIE/ANIME)")
-    void differentCategories_shareCacheEntry() {
+    @DisplayName("페이지가 다르면 각각 TMDB를 호출한다 (1페이지 캐시를 2페이지에 돌려주면 안 된다)")
+    void differentPage_callsAgain() {
         stubTmdbReturns(movieResponse("엘리멘탈"));
 
-        tmdbSearchService.search(Category.ALL, "엘리멘탈");
-        tmdbSearchService.search(Category.MOVIE, "엘리멘탈");
-        tmdbSearchService.search(Category.ANIME, "엘리멘탈");
+        tmdbSearchService.search(Category.MOVIE, "엘리멘탈", 1);
+        tmdbSearchService.search(Category.MOVIE, "엘리멘탈", 2);
 
-        verifyTmdbCalls(1);
+        verifyTmdbCalls(2);
+    }
+
+    @Test
+    @DisplayName("카테고리가 다르면 캐시를 공유하지 않는다 (결과가 카테고리별로 필터링되기 때문)")
+    void differentCategory_callsAgain() {
+        stubTmdbReturns(movieResponse("엘리멘탈"));
+
+        tmdbSearchService.search(Category.ALL, "엘리멘탈", 1);
+        tmdbSearchService.search(Category.MOVIE, "엘리멘탈", 1);
+
+        verifyTmdbCalls(2);
     }
 
     @Test
@@ -110,27 +123,27 @@ class TmdbSearchServiceCacheTest {
     void differentQuery_callsAgain() {
         stubTmdbReturns(movieResponse("결과"));
 
-        tmdbSearchService.search(Category.ALL, "엘리멘탈");
-        tmdbSearchService.search(Category.ALL, "인사이드 아웃");
+        tmdbSearchService.search(Category.ALL, "엘리멘탈", 1);
+        tmdbSearchService.search(Category.ALL, "인사이드 아웃", 1);
 
         verifyTmdbCalls(2);
     }
 
     @Test
-    @DisplayName("TMDB 장애로 반환된 빈 리스트는 캐싱되지 않고, 복구되면 정상 결과가 캐싱된다")
+    @DisplayName("TMDB 장애로 반환된 빈 결과는 캐싱되지 않고, 복구되면 정상 결과가 캐싱된다")
     void apiFailure_isNotCached() {
         when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
                 .thenThrow(new ResourceAccessException("timeout"))
                 .thenReturn(ResponseEntity.ok(movieResponse("복구됨")));
 
-        List<UnifiedSearchResponse> duringOutage = tmdbSearchService.search(Category.ALL, "엘리멘탈");
-        List<UnifiedSearchResponse> afterRecovery = tmdbSearchService.search(Category.ALL, "엘리멘탈");
-        List<UnifiedSearchResponse> cachedHit = tmdbSearchService.search(Category.ALL, "엘리멘탈");
+        SearchResponse duringOutage = tmdbSearchService.search(Category.ALL, "엘리멘탈", 1);
+        SearchResponse afterRecovery = tmdbSearchService.search(Category.ALL, "엘리멘탈", 1);
+        SearchResponse cachedHit = tmdbSearchService.search(Category.ALL, "엘리멘탈", 1);
 
-        assertThat(duringOutage).isEmpty();
-        assertThat(afterRecovery).hasSize(1);
-        assertThat(afterRecovery.get(0).getTitle()).isEqualTo("복구됨");
-        assertThat(cachedHit).hasSize(1);
+        assertThat(duringOutage.getResults()).isEmpty();
+        assertThat(afterRecovery.getResults()).hasSize(1);
+        assertThat(afterRecovery.getResults().get(0).getTitle()).isEqualTo("복구됨");
+        assertThat(cachedHit.getResults()).hasSize(1);
         // 장애 1회 + 복구 후 1회 = 2회. 세 번째는 캐시 히트여야 한다.
         verifyTmdbCalls(2);
     }
@@ -140,10 +153,12 @@ class TmdbSearchServiceCacheTest {
     void emptyResult_isNotCached() {
         TmdbResponse empty = new TmdbResponse();
         empty.setResults(List.of());
+        empty.setTotalPages(1);
+        empty.setTotalResults(0);
         stubTmdbReturns(empty);
 
-        tmdbSearchService.search(Category.ALL, "존재하지않는제목");
-        tmdbSearchService.search(Category.ALL, "존재하지않는제목");
+        tmdbSearchService.search(Category.ALL, "존재하지않는제목", 1);
+        tmdbSearchService.search(Category.ALL, "존재하지않는제목", 1);
 
         verifyTmdbCalls(2);
     }
@@ -167,6 +182,8 @@ class TmdbSearchServiceCacheTest {
 
         TmdbResponse response = new TmdbResponse();
         response.setResults(List.of(item));
+        response.setTotalPages(1); 
+        response.setTotalResults(1);
         return response;
     }
 }

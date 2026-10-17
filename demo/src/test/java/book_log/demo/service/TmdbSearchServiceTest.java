@@ -113,6 +113,7 @@ public class TmdbSearchServiceTest {
         TmdbResponse mockResponse = new TmdbResponse();
         mockResponse.setResults(List.of(mockItem));
         mockResponse.setTotalPages(1);
+        mockResponse.setTotalResults(1);
 
         when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
                 .thenReturn(ResponseEntity.ok(mockResponse));
@@ -153,12 +154,30 @@ public class TmdbSearchServiceTest {
         // 서비스의 mapToResponse 로직에 따라 결과 개수 확인 가능
         // 만약 null 필터가 있다면 assertThat(response.getResults()).hasSize(1);
     }
+    
     @Test
     @DisplayName("TMDB id가 externalId(문자열)로 매핑되고, isSaved는 Provider에서 채우지 않는다")
     void externalIdMappedFromTmdbId() {
-        // (when / mockItem / mockResponse 부분은 그대로, 마지막 호출과 검증만 아래처럼)
+        // given
+        when(apiConfig.getTmdbToken()).thenReturn("test-token");
+
+        TmdbResponse.TmdbItem mockItem = new TmdbResponse.TmdbItem();
+        mockItem.setId(550L);
+        mockItem.setMediaType("movie");
+        mockItem.setTitle("파이트 클럽");
+
+        TmdbResponse mockResponse = new TmdbResponse();
+        mockResponse.setResults(List.of(mockItem));
+        mockResponse.setTotalPages(1);
+        mockResponse.setTotalResults(1);
+
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
+                .thenReturn(ResponseEntity.ok(mockResponse));
+
+        // when
         SearchResponse response = tmdbSearchService.search(Category.ALL, "파이트 클럽", 1);
 
+        // then
         assertThat(response.getResults().get(0).getExternalId()).isEqualTo("550");
         assertThat(response.getResults().get(0).getIsSaved()).isNull();
     }
@@ -166,9 +185,25 @@ public class TmdbSearchServiceTest {
     @Test
     @DisplayName("TMDB id가 null이면 externalId는 문자열 \"null\"이 아니라 null이어야 한다")
     void nullTmdbId_givesNullExternalId() {
-        // (준비 부분은 그대로)
+        // given
+        when(apiConfig.getTmdbToken()).thenReturn("test-token");
+
+        TmdbResponse.TmdbItem mockItem = new TmdbResponse.TmdbItem();
+        mockItem.setMediaType("movie");
+        mockItem.setTitle("id 없는 영화");
+
+        TmdbResponse mockResponse = new TmdbResponse();
+        mockResponse.setResults(List.of(mockItem));
+        mockResponse.setTotalPages(1);
+        mockResponse.setTotalResults(1);
+
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
+                .thenReturn(ResponseEntity.ok(mockResponse));
+
+        // when
         SearchResponse response = tmdbSearchService.search(Category.ALL, "test", 1);
 
+        // then
         assertThat(response.getResults().get(0).getExternalId()).isNull();
     }
 }

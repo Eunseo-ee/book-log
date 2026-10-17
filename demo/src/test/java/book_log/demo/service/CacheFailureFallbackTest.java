@@ -31,8 +31,8 @@ import book_log.demo.config.ApiConfig;
 import book_log.demo.config.CacheErrorConfig;
 import book_log.demo.config.RedisCacheConfig;
 import book_log.demo.domain.Category;
+import book_log.demo.dto.response.SearchResponse;
 import book_log.demo.dto.response.TmdbResponse;
-import book_log.demo.dto.response.UnifiedSearchResponse;
 
 /**
  * Redis가 죽어 있어도 검색은 외부 API로 대체 호출되어 정상 동작해야 한다.
@@ -90,15 +90,18 @@ class CacheFailureFallbackTest {
         item.setTitle("엘리멘탈");
         TmdbResponse response = new TmdbResponse();
         response.setResults(List.of(item));
+        response.setTotalPages(1);
+        response.setTotalResults(1);
+
 
         when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
                 .thenReturn(ResponseEntity.ok(response));
 
-        List<UnifiedSearchResponse> first = tmdbSearchService.search(Category.ALL, "엘리멘탈");
-        List<UnifiedSearchResponse> second = tmdbSearchService.search(Category.ALL, "엘리멘탈");
+        SearchResponse first = tmdbSearchService.search(Category.ALL, "엘리멘탈", 1);
+        SearchResponse second = tmdbSearchService.search(Category.ALL, "엘리멘탈", 1);
 
-        assertThat(first).hasSize(1);
-        assertThat(second).hasSize(1);
+        assertThat(first.getResults()).hasSize(1);
+        assertThat(second.getResults()).hasSize(1);
         // 캐시를 쓸 수 없으니 매번 외부 API를 호출 (성능은 떨어지지만 기능은 유지)
         verify(restTemplate, times(2))
                 .exchange(anyString(), eq(HttpMethod.GET), any(), eq(TmdbResponse.class));

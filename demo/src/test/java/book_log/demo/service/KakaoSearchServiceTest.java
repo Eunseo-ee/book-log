@@ -25,6 +25,7 @@ import org.springframework.web.client.RestTemplate;
 import book_log.demo.config.ApiConfig;
 import book_log.demo.domain.Category;
 import book_log.demo.dto.response.KakaoBookResponse;
+import book_log.demo.dto.response.SearchResponse;
 import book_log.demo.dto.response.UnifiedSearchResponse;
 
 @ExtendWith(MockitoExtension.class)
@@ -59,20 +60,26 @@ class KakaoSearchServiceTest {
         doc.setTitle("테스트 책");
         doc.setIsbn(isbn);
 
+        // KakaoSearchService.search가 meta.total_count로 전체 페이지 수를 계산하므로 meta가 반드시 필요하다
+        KakaoBookResponse.Meta meta = new KakaoBookResponse.Meta();
+        meta.setTotalCount(1);
+
         KakaoBookResponse body = new KakaoBookResponse();
         body.setDocuments(List.of(doc));
+        body.setMeta(meta);
 
         when(apiConfig.getKakaoKey()).thenReturn("test-key");
         when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(KakaoBookResponse.class)))
                 .thenReturn(ResponseEntity.ok(body));
 
-        List<UnifiedSearchResponse> results = kakaoSearchService.search(Category.BOOK, "테스트");
+        SearchResponse response = kakaoSearchService.search(Category.BOOK, "테스트", 1);
 
-        assertThat(results).hasSize(1);
-        assertThat(results.get(0).getExternalId()).isEqualTo(expected);
+        assertThat(response.getResults()).hasSize(1);
+        UnifiedSearchResponse result = response.getResults().get(0);
+        assertThat(result.getExternalId()).isEqualTo(expected);
         // isSaved는 Provider(캐시 대상 구간)에서 채우지 않는다
-        assertThat(results.get(0).getIsSaved()).isNull();
-        assertThat(results.get(0).getCategory()).isEqualTo(Category.BOOK);
+        assertThat(result.getIsSaved()).isNull();
+        assertThat(result.getCategory()).isEqualTo(Category.BOOK);
     }
 
     @Test
