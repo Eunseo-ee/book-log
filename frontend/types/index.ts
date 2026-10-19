@@ -9,12 +9,28 @@ export type Status = 'READING' | 'WATCHING' | 'COMPLETED' | 'WANT_to_WATCH' | 'S
 
 // UnifiedSearchResponse.java
 export interface UnifiedSearchResponse {
+  externalId: string | null   // 책: ISBN13(없으면 ISBN10), 영화/드라마/애니: TMDB id
   title: string
   authorOrDirector: string
   releaseDate: string
   voteAverage: number | null
-  thumbnailUrl: string
+  thumbnailUrl: string | null
   category: Category
+  isSaved?: boolean | null    // 응답에 없거나 null이면 false로 취급
+}
+
+// SearchResponse.java — GET /api/search 응답 (currentPage는 백엔드가 채우지 않아 항상 0)
+export interface SearchResponse {
+  results: UnifiedSearchResponse[]
+  currentPage: number
+  totalPages: number
+  totalResults: number
+}
+
+// ErrorResponse.java — GlobalExceptionHandler의 400/500 응답
+export interface ErrorResponse {
+  status: number
+  message: string
 }
 
 // ContentResponseDto.java
