@@ -1,0 +1,7 @@
+- [ ] currentPage가 항상 0으로 내려옴 (검색 응답)
+- [ ] isSaved가 userId를 반영하지 않음 → JWT 병합 시 확인
+- [ ] 배지 라벨 표기 통일 ("도서" vs "책", "TV 프로그램" vs "드라마")
+- [ ] TMDB credits API로 실제 감독 연동
+- [ ] test 폴더 DemoApplication.java가 main 클래스를 가림
+- [ ] HighlightServiceTest 길이 초과 테스트가 엉뚱한 예외로 통과
+- [ ] GET /api/highlights 모음집 API (프론트 /highlights가 이미 호출 중)
