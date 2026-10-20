@@ -4,3 +4,6 @@
 - 2026-10-19: isSaved는 캐시에 넣지 않고 요청마다 IN 쿼리로 채운다 (사용자 상태라서)
 - 2026-10-19: TMDB authorOrDirector는 "상세 정보 참조" 문자열 대신 null로 내려준다. 화면은 null이면 "-" 표시. 감독 연동(credits API)은 백로그, currentPage 항상 0, isSaved의 userId 미반영(JWT 병합 시), 배지 라벨 표기 통일
 - 2026-10-20: 평점은 선택 입력. 보고 싶은 작품(WANT_to_WATCH)은 별점 없이 저장할 수 있어야 하므로, 서버가 rating null을 허용하고 프론트는 비우면 필드를 보내지 않는다
+- 2026-10-20: 캘린더 CORS는 검색/저장과 같은 Next 프록시로 통일 (백엔드 전역 CORS 설정은 하지 않음)
+- 2026-10-20: Content.userId는 @Builder.Default로 1L 유지 (JWT 병합 시 교체). 기존 user_id NULL 행은 SQL로 직접 보정
+- 2026-10-20: 사이드바 미니 캘린더는 오늘 날짜에도 점을 그린다

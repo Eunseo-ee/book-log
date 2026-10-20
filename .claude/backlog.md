@@ -13,3 +13,7 @@
 - [ ] frontend/types/index.ts authorOrDirector 타입을 string | null 로 (컴포넌트는 이미 null 처리 중)
 - [ ] UnifiedSearchResponse.java authorOrDirector 주석이 예전 동작("상세페이지 참조")을 설명함
 - [ ] 캐시 키에 매핑 버전 구분이 없어 매핑 로직 변경 시 최대 10분간 옛 응답이 나감 (TTL 의존)
+- [ ] 캘린더 요청 실패 시 에러 표시 없이 빈 캘린더가 됨 (useCalendar.ts) → 실패와 기록 없음이 구분 안 됨
+- [ ] 메인 캘린더 날짜 클릭 미구현 (onClick/상세 화면/날짜 조회 API 없음) → 저장한 기록을 어디서 보는지 모르겠다는 인박스 항목과 연결
+- [ ] 하이라이트 API도 프록시 없이 직접 호출해서 같은 CORS 실패 예상, GET /api/highlights 자체가 백엔드에 없음
+- [ ] StatisticsController: month 없이 호출하면 NPE (null 체크 전에 비교)
