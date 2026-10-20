@@ -63,6 +63,30 @@ class ContentServiceTest {
     }
 
     @Test
+    @DisplayName("평점 없이 저장 성공 - rating은 0.0이 아니라 null로 전달된다")
+    void saveContent_Success_NullRating() {
+        // given: rating을 지정하지 않은 DTO (보고 싶은 작품 등)
+        ContentRequestDto requestDto = ContentRequestDto.builder()
+                .title("보고 싶은 영화")
+                .externalId("movie_456")
+                .category(Category.MOVIE)
+                .viewDate(java.time.LocalDate.now())
+                .build();
+
+        when(contentRepository.save(any(Content.class)))
+                .thenReturn(Content.builder().id(200L).build());
+
+        // when
+        Long savedId = assertDoesNotThrow(() -> contentService.saveContent(requestDto));
+
+        // then: 저장소에 넘어간 엔티티의 rating이 null인지 확인 (0점과 '평가 안 함' 구분)
+        assertEquals(200L, savedId);
+        org.mockito.ArgumentCaptor<Content> captor = org.mockito.ArgumentCaptor.forClass(Content.class);
+        verify(contentRepository).save(captor.capture());
+        assertNull(captor.getValue().getRating());
+    }
+
+    @Test
     @DisplayName("콘텐츠 저장 실패 - 이미 등록된 경우")
     void savedContent_Fail_Duplicate() {
         // given
