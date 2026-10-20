@@ -206,4 +206,38 @@ public class TmdbSearchServiceTest {
         // then
         assertThat(response.getResults().get(0).getExternalId()).isNull();
     }
+
+    @Test
+    @DisplayName("TMDB 결과의 authorOrDirector는 안내 문구가 아니라 null이어야 한다 (영화/TV 모두)")
+    void authorOrDirectorIsNull() {
+        // given
+        when(apiConfig.getTmdbToken()).thenReturn("test-token");
+
+        TmdbResponse.TmdbItem movie = new TmdbResponse.TmdbItem();
+        movie.setId(550L);
+        movie.setMediaType("movie");
+        movie.setTitle("파이트 클럽");
+
+        TmdbResponse.TmdbItem tv = new TmdbResponse.TmdbItem();
+        tv.setId(1396L);
+        tv.setMediaType("tv");
+        tv.setName("브레이킹 배드");
+
+        TmdbResponse mockResponse = new TmdbResponse();
+        mockResponse.setResults(List.of(movie, tv));
+        mockResponse.setTotalPages(1);
+        mockResponse.setTotalResults(2);
+
+        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
+                .thenReturn(ResponseEntity.ok(mockResponse));
+
+        // when
+        SearchResponse response = tmdbSearchService.search(Category.ALL, "test", 1);
+
+        // then
+        assertThat(response.getResults()).hasSize(2);
+        assertThat(response.getResults())
+                .extracting(UnifiedSearchResponse::getAuthorOrDirector)
+                .containsOnlyNulls();
+    }
 }

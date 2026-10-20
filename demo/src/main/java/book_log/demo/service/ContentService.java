@@ -44,8 +44,9 @@ public class ContentService {
     // 콘텐츠 저장 (중복 체크 및 유효성 검사 포함)
     @Transactional
     public Long saveContent(ContentRequestDto requestDto) {
-        // 1. 평점 검증 (추가!)
-        if (requestDto.getRating() < 0 || requestDto.getRating() > 5.0) {
+        // 1. 평점 검증 (선택 입력: null이면 '평가 안 함'으로 보고 범위 검증을 건너뜀)
+        Double rating = requestDto.getRating();
+        if (rating != null && (rating < 0 || rating > 5.0)) {
             throw new IllegalArgumentException("평점은 0에서 5 사이여야 합니다.");
         }
 

@@ -1,0 +1,15 @@
+- [ ] currentPage가 항상 0으로 내려옴 (검색 응답)
+- [ ] isSaved가 userId를 반영하지 않음 → JWT 병합 시 확인
+- [ ] 배지 라벨 표기 통일 ("도서" vs "책", "TV 프로그램" vs "드라마")
+- [ ] TMDB credits API로 실제 감독 연동
+- [ ] test 폴더 DemoApplication.java가 main 클래스를 가림
+- [ ] HighlightServiceTest 길이 초과 테스트가 엉뚱한 예외로 통과
+- [ ] GET /api/highlights 모음집 API (프론트 /highlights가 이미 호출 중)
+- [ ] WANT_to_WATCH 저장 시 viewDate 필수/미래 불가 제약과 충돌. 날짜 없는 기록을 캘린더·통계가 어떻게 다룰지 결정 필요
+- [ ] 평점이 하나도 없는 달의 averageRating을 0.0 대신 null로 (StatisticsService, StatisticsServiceTest 같이 수정, 프론트는 null이면 '—')
+- [ ] Content.updateRating에 범위 검증 없음 (수정 API 만들 때)
+- [ ] 평점 0.5 단위를 서버가 강제하지 않음
+- [ ] 평점 범위 오류 응답 형식이 컨트롤러(@Valid)와 서비스에서 다름
+- [ ] frontend/types/index.ts authorOrDirector 타입을 string | null 로 (컴포넌트는 이미 null 처리 중)
+- [ ] UnifiedSearchResponse.java authorOrDirector 주석이 예전 동작("상세페이지 참조")을 설명함
+- [ ] 캐시 키에 매핑 버전 구분이 없어 매핑 로직 변경 시 최대 10분간 옛 응답이 나감 (TTL 의존)
