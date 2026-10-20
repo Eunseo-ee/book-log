@@ -25,6 +25,8 @@ function todayString() {
 
 export default function SaveContentForm({ item, onClose, onSaved }: Props) {
   const today = todayString()
+  // TMDB 결과는 null로 온다. 공백뿐인 값도 '없음'으로 보고 표시/전송 모두 같은 기준을 쓴다
+  const author = item.authorOrDirector?.trim() || null
 
   const [viewDate, setViewDate] = useState(today)
   const [rating, setRating]     = useState('')           // '' = 평점 없음
@@ -62,7 +64,7 @@ export default function SaveContentForm({ item, onClose, onSaved }: Props) {
       category: item.category,
       viewDate,
       status,
-      ...(item.authorOrDirector ? { authorOrDirector: item.authorOrDirector } : {}),
+      ...(author ? { authorOrDirector: author } : {}),
       ...(item.thumbnailUrl ? { thumbnailUrl: item.thumbnailUrl } : {}),
       ...(item.externalId ? { externalId: item.externalId } : {}),
       ...(rating !== '' ? { rating: Number(rating) } : {}),
@@ -126,7 +128,7 @@ export default function SaveContentForm({ item, onClose, onSaved }: Props) {
               {CATEGORY_LABEL[item.category] ?? item.category}
             </span>
             <p className="text-sm font-semibold text-neutral-900 dark:text-white">{item.title}</p>
-            {item.authorOrDirector && <p className="text-[12px] text-neutral-500">{item.authorOrDirector}</p>}
+            <p className="text-[12px] text-neutral-500">저자/감독 · {author ?? '-'}</p>
             <p className="text-[11px] text-neutral-400">ID · {item.externalId}</p>
           </div>
         </div>

@@ -111,10 +111,12 @@ public class TmdbSearchService implements SearchProvider {
                 // String.valueOf(null Long)은 "null" 문자열이 되므로 null 체크 필수
                 String externalId = (item.getId() != null) ? String.valueOf(item.getId()) : null;
 
+                // 5. 감독 정보: search/multi 응답에는 없다 (credits API 연동 전).
+                // 안내 문구를 넣으면 저장 시 그대로 DB에 들어가므로, 값이 없다는 뜻으로 null을 내려준다.
                 return UnifiedSearchResponse.builder()
                         .externalId(externalId)
                         .title(title)
-                        .authorOrDirector("상세 정보 참조")
+                        .authorOrDirector(null)
                         .releaseDate(date)
                         .voteAverage(item.getVoteAverage())
                         .thumbnailUrl(fullThumbnailUrl)
