@@ -28,8 +28,9 @@ public class Content extends BaseTimeEntity{
     private Double rating;
     private LocalDate viewDate;
 
-    // 임시
+    // 임시 (JWT 병합 시 교체)
     @Column(name = "user_id")
+    @Builder.Default
     private Long userId = 1L;
 
     @Column(columnDefinition = "TEXT")
