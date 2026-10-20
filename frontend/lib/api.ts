@@ -11,7 +11,7 @@ import type {
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080'
 
-// 브라우저에서 호출하는 검색/저장 API는 next.config.js의 rewrites 프록시(/api/* → Spring)를 거친다.
+// 브라우저에서 호출하는 검색/저장/캘린더 API는 next.config.js의 rewrites 프록시(/api/* → Spring)를 거친다.
 // 같은 출처 요청이라 백엔드 CORS 설정이 필요 없다. (백엔드 @CrossOrigin은 StatisticsController에만 있음)
 const PROXY_BASE_URL = ''
 
@@ -68,7 +68,7 @@ export function toErrorMessages(err: unknown): string[] {
 // ─── 캘린더 ───────────────────────────────────────────────────────────────────
 // GET /api/calendar/activities?year=2026&month=4
 export const getCalendarActivities = (year: number, month: number) =>
-  request<CalendarResponse>(`/api/calendar/activities?year=${year}&month=${month}`)
+  request<CalendarResponse>(`/api/calendar/activities?year=${year}&month=${month}`, undefined, PROXY_BASE_URL)
 
 // ─── 통계 ─────────────────────────────────────────────────────────────────────
 // GET /api/statistics?year=2026&month=4
