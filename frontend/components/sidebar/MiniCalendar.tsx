@@ -83,9 +83,14 @@ export default function MiniCalendar() {
                 }`}
             >
               {d}
-              {/* 기록 dot — GET /api/calendar/activities boolean 응답 */}
-              {hasRecord && !todayFlag && (
-                <span className="absolute bottom-[2px] left-1/2 -translate-x-1/2 w-[3px] h-[3px] rounded-full bg-violet-500" />
+              {/* 기록 dot — GET /api/calendar/activities boolean 응답
+                  오늘 칸은 배경이 채워져 있어 같은 위치에 대비되는 밝은 보라로 그린다 */}
+              {hasRecord && (
+                <span
+                  className={`absolute bottom-[2px] left-1/2 -translate-x-1/2 w-[3px] h-[3px] rounded-full ${
+                    todayFlag ? 'bg-violet-300 dark:bg-violet-600' : 'bg-violet-500'
+                  }`}
+                />
               )}
             </div>
           )
