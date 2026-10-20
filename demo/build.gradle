@@ -24,6 +24,9 @@ repositories {
 	mavenCentral()
 }
 
+// VS Code Java 확장(JDT)과의 호환을 위해 Lombok 버전 상향
+ext['lombok.version'] = '1.18.42'
+
 dependencies {
     // 메인 로직 관련
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
