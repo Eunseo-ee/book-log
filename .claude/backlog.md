@@ -10,3 +10,6 @@
 - [ ] Content.updateRating에 범위 검증 없음 (수정 API 만들 때)
 - [ ] 평점 0.5 단위를 서버가 강제하지 않음
 - [ ] 평점 범위 오류 응답 형식이 컨트롤러(@Valid)와 서비스에서 다름
+- [ ] frontend/types/index.ts authorOrDirector 타입을 string | null 로 (컴포넌트는 이미 null 처리 중)
+- [ ] UnifiedSearchResponse.java authorOrDirector 주석이 예전 동작("상세페이지 참조")을 설명함
+- [ ] 캐시 키에 매핑 버전 구분이 없어 매핑 로직 변경 시 최대 10분간 옛 응답이 나감 (TTL 의존)
