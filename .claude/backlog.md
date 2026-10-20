@@ -5,3 +5,8 @@
 - [ ] test 폴더 DemoApplication.java가 main 클래스를 가림
 - [ ] HighlightServiceTest 길이 초과 테스트가 엉뚱한 예외로 통과
 - [ ] GET /api/highlights 모음집 API (프론트 /highlights가 이미 호출 중)
+- [ ] WANT_to_WATCH 저장 시 viewDate 필수/미래 불가 제약과 충돌. 날짜 없는 기록을 캘린더·통계가 어떻게 다룰지 결정 필요
+- [ ] 평점이 하나도 없는 달의 averageRating을 0.0 대신 null로 (StatisticsService, StatisticsServiceTest 같이 수정, 프론트는 null이면 '—')
+- [ ] Content.updateRating에 범위 검증 없음 (수정 API 만들 때)
+- [ ] 평점 0.5 단위를 서버가 강제하지 않음
+- [ ] 평점 범위 오류 응답 형식이 컨트롤러(@Valid)와 서비스에서 다름
