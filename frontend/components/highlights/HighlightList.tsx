@@ -6,7 +6,7 @@ import { useHighlights } from '@/hooks/useHighlights'
 import { deleteHighlight } from '@/lib/api'
 import HighlightCard from './HighlightCard'
 import AddHighlightModal from './AddHighlightModal'
-import type { Category } from '@/types'
+import type { Category, HighlightResponseDto } from '@/types'
 import { CATEGORY_FILTER_TABS, YEAR_OPTIONS } from '@/lib/constants'
 
 export default function HighlightList() {
@@ -14,6 +14,7 @@ export default function HighlightList() {
   const [category, setCategory] = useState<Category | 'ALL'>('ALL')
   const [search, setSearch]     = useState('')
   const [adding, setAdding]     = useState(false)
+  const [editing, setEditing]   = useState<HighlightResponseDto | null>(null)
 
   // GET /api/highlights?year=...&category=...
   const { highlights, loading, refetch } = useHighlights(
@@ -115,6 +116,7 @@ export default function HighlightList() {
               key={h.id}
               highlight={h}
               onDelete={handleDelete}
+              onEdit={setEditing}
             />
           ))}
         </div>
@@ -125,6 +127,19 @@ export default function HighlightList() {
           onClose={() => setAdding(false)}
           onSaved={() => {
             setAdding(false)
+            refetch()
+          }}
+        />
+      )}
+
+      {/* 수정: 작품 고정, PUT /api/highlights/:id. 탭/연도 필터와 정렬(createdAt) 기준이 안 바뀌어 카드 위치 그대로 */}
+      {editing && (
+        <AddHighlightModal
+          mode="edit"
+          highlight={editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            setEditing(null)
             refetch()
           }}
         />
