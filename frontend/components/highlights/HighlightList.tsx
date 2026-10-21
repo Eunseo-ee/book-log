@@ -1,16 +1,19 @@
 'use client'
 
 import { useState } from 'react'
+import { Plus } from 'lucide-react'
 import { useHighlights } from '@/hooks/useHighlights'
 import { deleteHighlight } from '@/lib/api'
 import HighlightCard from './HighlightCard'
-import type { Category, HighlightWithContent } from '@/types'
+import AddHighlightModal from './AddHighlightModal'
+import type { Category } from '@/types'
 import { CATEGORY_FILTER_TABS, YEAR_OPTIONS } from '@/lib/constants'
 
 export default function HighlightList() {
   const [year, setYear]         = useState<number | undefined>(undefined)
   const [category, setCategory] = useState<Category | 'ALL'>('ALL')
   const [search, setSearch]     = useState('')
+  const [adding, setAdding]     = useState(false)
 
   // GET /api/highlights?year=...&category=...
   const { highlights, loading, refetch } = useHighlights(
@@ -29,7 +32,7 @@ export default function HighlightList() {
     ? highlights.filter(
         (h) =>
           h.text.includes(search) ||
-          h.content.title.includes(search),
+          (h.contentTitle ?? '').includes(search),
       )
     : highlights
 
@@ -40,13 +43,22 @@ export default function HighlightList() {
         <h1 className="text-xl font-semibold text-neutral-900 dark:text-white">
           나만의 문장 모음집
         </h1>
-        <input
-          type="text"
-          placeholder="문장 또는 작품 검색..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full sm:w-56 px-3 py-2 text-sm bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl outline-none focus:ring-2 focus:ring-violet-500 placeholder:text-neutral-400 text-neutral-800 dark:text-neutral-200"
-        />
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            placeholder="문장 또는 작품 검색..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full sm:w-56 px-3 py-2 text-sm bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-xl outline-none focus:ring-2 focus:ring-violet-500 placeholder:text-neutral-400 text-neutral-800 dark:text-neutral-200"
+          />
+          <button
+            type="button"
+            onClick={() => setAdding(true)}
+            className="flex-shrink-0 flex items-center gap-1 px-3 py-2 text-sm font-medium text-white bg-violet-600 rounded-xl hover:bg-violet-700 transition-colors"
+          >
+            <Plus size={14} /> 하이라이트 추가
+          </button>
+        </div>
       </div>
 
       {/* 필터 바 */}
@@ -106,6 +118,16 @@ export default function HighlightList() {
             />
           ))}
         </div>
+      )}
+
+      {adding && (
+        <AddHighlightModal
+          onClose={() => setAdding(false)}
+          onSaved={() => {
+            setAdding(false)
+            refetch()
+          }}
+        />
       )}
     </div>
   )

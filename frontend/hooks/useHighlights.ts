@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { getHighlights } from '@/lib/api'
-import type { Category, HighlightWithContent } from '@/types'
+import type { Category, HighlightResponseDto } from '@/types'
 
 export function useHighlights(year?: number, category?: Category) {
-  const [highlights, setHighlights] = useState<HighlightWithContent[]>([])
+  const [highlights, setHighlights] = useState<HighlightResponseDto[]>([])
   const [loading, setLoading] = useState(true)
 
   const refetch = () => {

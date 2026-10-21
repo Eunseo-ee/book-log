@@ -44,6 +44,21 @@ export interface ContentResponseDto {
   imgUrl: string | null
 }
 
+// HighlightResponseDto.java — GET /api/highlights 응답 (부모 콘텐츠 정보가 평평하게 펼쳐져 옴)
+// 선택 필드는 값이 없으면 null로 온다. content_id FK에 NOT NULL이 없어 content* 도 null 가능
+export interface HighlightResponseDto {
+  id: number
+  text: string
+  page: number | null
+  season: number | null
+  episode: number | null
+  timestamp: string | null
+  createdAt: string               // LocalDateTime → "2026-10-21T13:05:12.345" (시간대 없음)
+  contentId: number | null
+  contentTitle: string | null
+  contentCategory: Category | null
+}
+
 // CalendarResponse.java
 export interface CalendarResponse {
   year: number
@@ -99,23 +114,4 @@ export interface HighlightRequestDto {
   season?: number
   episode?: number
   timestamp?: string    // "01:23:45"
-}
-
-// ─── UI-only types ────────────────────────────────────────────────────────────
-
-// 하이라이트 목록 조회용 (GET /api/highlights - 백엔드 추가 예정)
-export interface HighlightWithContent {
-  id: number
-  text: string
-  page?: number
-  season?: number
-  episode?: number
-  timestamp?: string
-  createdAt: string
-  content: {
-    id: number
-    title: string
-    category: Category
-    thumbnailUrl?: string
-  }
 }

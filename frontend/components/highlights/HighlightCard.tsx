@@ -1,16 +1,16 @@
-import type { HighlightWithContent } from '@/types'
+import type { HighlightResponseDto } from '@/types'
 import { CATEGORY_BADGE, CATEGORY_ACCENT, CATEGORY_LABEL } from '@/lib/constants'
 import { Pencil, Trash2 } from 'lucide-react'
 
 interface Props {
-  highlight: HighlightWithContent
+  highlight: HighlightResponseDto
   onDelete?: (id: number) => void
-  onEdit?: (h: HighlightWithContent) => void
+  onEdit?: (h: HighlightResponseDto) => void
 }
 
 export default function HighlightCard({ highlight, onDelete, onEdit }: Props) {
-  const { id, text, content, createdAt, page, season, episode, timestamp } = highlight
-  const category = content.category
+  const { id, text, contentTitle, contentCategory, createdAt, page, season, episode, timestamp } = highlight
+  const category = contentCategory ?? ''
 
   // 위치 정보 — 백엔드 Highlight 엔티티의 page/season/episode/timestamp
   const locationParts: string[] = []
@@ -28,10 +28,12 @@ export default function HighlightCard({ highlight, onDelete, onEdit }: Props) {
     <article className="group bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors">
       {/* 메타 */}
       <div className="flex items-center gap-2 mb-3">
-        <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${CATEGORY_BADGE[category] ?? 'bg-neutral-100 text-neutral-600'}`}>
-          {CATEGORY_LABEL[category] ?? category}
-        </span>
-        <span className="text-[12px] text-neutral-500">{content.title}</span>
+        {category && (
+          <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${CATEGORY_BADGE[category] ?? 'bg-neutral-100 text-neutral-600'}`}>
+            {CATEGORY_LABEL[category] ?? category}
+          </span>
+        )}
+        <span className="text-[12px] text-neutral-500">{contentTitle ?? '-'}</span>
         {location && (
           <>
             <span className="text-neutral-300 dark:text-neutral-700 text-xs">·</span>

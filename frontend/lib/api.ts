@@ -4,7 +4,7 @@ import type {
   ContentRequestDto,
   ContentResponseDto,
   HighlightRequestDto,
-  HighlightWithContent,
+  HighlightResponseDto,
   SearchResponse,
   StatisticsResponse,
 } from '@/types'
@@ -101,12 +101,12 @@ export const checkDuplicate = (externalId: string, category: Category) =>
   request<boolean>(`/api/contents/check?externalId=${externalId}&category=${category}`)
 
 // ─── 하이라이트 ───────────────────────────────────────────────────────────────
-// GET /api/highlights?year=2026&category=BOOK  (백엔드 추가 예정 엔드포인트)
+// GET /api/highlights?year=2026&category=BOOK
 export const getHighlights = (year?: number, category?: Category) => {
   const params = new URLSearchParams()
   if (year) params.set('year', String(year))
   if (category && category !== 'ALL') params.set('category', category)
-  return request<HighlightWithContent[]>(`/api/highlights?${params}`)
+  return request<HighlightResponseDto[]>(`/api/highlights?${params}`)
 }
 
 // POST /api/highlights
