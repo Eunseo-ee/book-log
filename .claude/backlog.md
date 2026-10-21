@@ -28,3 +28,6 @@
 - [ ] 프론트 ContentResponseDto.author 타입이 string인데 TMDB 작품은 null로 옴 (09)
 - [ ] 프론트에 lint 스크립트/ESLint/테스트 도구 없음 → 도입 여부 결정 필요 (09)
 - [ ] GET /api/contents/filter 조건 없으면 findAll로 모든 사용자 콘텐츠 반환 → JWT 병합 시 userId 조건 필요 (09 작품 선택 목록이 사용 중)
+- [ ] PUT /api/highlights/{id}가 저장용 DTO를 공유해 contentId @NotNull인데 서비스는 안 씀 → 다른 id를 보내도 200, 작품은 안 바뀜. 수정 전용 DTO 분리 또는 작품 변경 지원 결정 (10)
+- [ ] 하이라이트 카드 수정/삭제 버튼이 hover에서만 보여 터치 기기에서 못 누름 (10)
+- [ ] AddHighlightModal이 추가·수정을 겸하게 됨 → 이름 변경(HighlightFormModal 등) 검토 (10)
