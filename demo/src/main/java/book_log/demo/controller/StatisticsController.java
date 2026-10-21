@@ -4,7 +4,6 @@ import java.time.DateTimeException;
 import java.time.LocalDate;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -14,7 +13,6 @@ import book_log.demo.dto.response.StatisticsResponse;
 import book_log.demo.service.StatisticsService;
 import lombok.RequiredArgsConstructor;
 
-@CrossOrigin(origins = "*") // 테스트 단계에서는 모두 허용, 나중에 리액트 주소만 허용
 @RestController
 @RequestMapping("/api/statistics")
 @RequiredArgsConstructor
