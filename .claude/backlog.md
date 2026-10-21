@@ -17,3 +17,14 @@
 - [ ] 메인 캘린더 날짜 클릭 미구현 (onClick/상세 화면/날짜 조회 API 없음) → 저장한 기록을 어디서 보는지 모르겠다는 인박스 항목과 연결
 - [ ] 하이라이트 API도 프록시 없이 직접 호출해서 같은 CORS 실패 예상, GET /api/highlights 자체가 백엔드에 없음
 - [ ] StatisticsController: month 없이 호출하면 NPE (null 체크 전에 비교)
+- [ ] ContentService.getFilteredContents: category=ANIME면 ANIME만 조회해서 TMDB 애니(ANIME_MOVIE/ANIME_TVA)가 빠짐. YEAR() 비교도 범위 비교 원칙과 다름
+- [ ] HighlightRepositoryTest(Replace.NONE)와 DemoApplicationTests가 application.yml을 읽어 실제 Supabase에 붙음
+- [ ] 프론트 HighlightWithContent(content 중첩 + thumbnailUrl)와 HighlightResponseDto(평평한 contentId/Title/Category) 형태 불일치
+- [ ] 프론트 호출 방식이 프록시(검색/캘린더/콘텐츠 저장)와 8080 직접(통계/contents filter·check/하이라이트)으로 두 갈래. 전역 CORS가 생겼으니 한쪽으로 통일할지 결정 필요. lib/api.ts:14-15 주석("@CrossOrigin은 StatisticsController에만 있음")도 이제 사실과 다름
+- [ ] 직접 호출은 origin이 정확히 http://localhost:3000일 때만 통과. 3000 포트가 사용 중이라 next dev가 3001로 뜨거나 127.0.0.1:3000으로 접속하면 403 (app.cors.allowed-origins에 추가하거나 프록시로 통일)
+- [ ] JWT 병합 시 쿠키 인증이면 CORS allowCredentials(true) 필요. 지금은 false (Authorization 헤더 방식이면 allowedHeaders "*"로 충분)
+- [ ] 하이라이트 "영화/드라마" 탭이 MOVIE만 보내서 TV 하이라이트가 빠짐 (백엔드 resolveCategories에서 MOVIE+TV 묶기 또는 탭 분리, 09)
+- [ ] 하이라이트 저장 후 현재 탭/연도 필터에 안 걸리면 목록 변화가 없어 성공 여부를 모름 (토스트 없음, 09)
+- [ ] 프론트 ContentResponseDto.author 타입이 string인데 TMDB 작품은 null로 옴 (09)
+- [ ] 프론트에 lint 스크립트/ESLint/테스트 도구 없음 → 도입 여부 결정 필요 (09)
+- [ ] GET /api/contents/filter 조건 없으면 findAll로 모든 사용자 콘텐츠 반환 → JWT 병합 시 userId 조건 필요 (09 작품 선택 목록이 사용 중)

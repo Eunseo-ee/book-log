@@ -7,3 +7,17 @@
 - 2026-10-20: 캘린더 CORS는 검색/저장과 같은 Next 프록시로 통일 (백엔드 전역 CORS 설정은 하지 않음)
 - 2026-10-20: Content.userId는 @Builder.Default로 1L 유지 (JWT 병합 시 교체). 기존 user_id NULL 행은 SQL로 직접 보정
 - 2026-10-20: 사이드바 미니 캘린더는 오늘 날짜에도 점을 그린다
+- 2026-10-21: CORS는 SecurityConfig의 전역 CorsConfigurationSource(/api/**, 허용 origin은 app.cors.allowed-origins, 기본 http://localhost:3000)로만 관리한다. StatisticsController의 @CrossOrigin("*")는 모든 origin을 열고 컨트롤러별로 누락이 생기는 방식이라 제거 (10-20 "백엔드 전역 CORS 설정은 하지 않음"을 대체)
+
+# 확정된 설계 결정
+
+- 선택 조건이 있는 조회는 Specification으로 구현한다. 조건이 null이면 null을 반환해 and()가 무시하게 한다.
+  (JPQL의 `:p IS NULL OR ...`은 PostgreSQL에서 null 파라미터 타입 추론 오류 위험)
+- 연도/월 필터는 YEAR(col) 대신 범위 비교 [시작일, 다음 기간 시작일)로 한다. (인덱스 활용, 경계 검증)
+- 연도 기준은 하이라이트 createdAt이 아니라 부모 Content.viewDate.
+- '애니' 타입은 ANIME + ANIME_MOVIE + ANIME_TVA를 모두 포함한다. (TMDB 애니가 ANIME_MOVIE/ANIME_TVA로 저장됨)
+  category가 null이거나 ALL이면 필터 없음.
+- LAZY 연관관계를 목록으로 내릴 때는 @EntityGraph로 N+1을 막는다.
+- 입력값 검증은 컨트롤러 @Validated 대신 서비스에서 IllegalArgumentException을 던진다.
+  (기존 GlobalExceptionHandler가 400 처리. @Validated는 ConstraintViolationException이 되어 500으로 샐 수 있음)
+- Redis 캐싱/비동기는 후순위.
