@@ -51,7 +51,8 @@ export const CATEGORY_DOT: Record<string, string> = {
 export const CATEGORY_FILTER_TABS: { label: string; value: Category | 'ALL' }[] = [
   { label: '전체',        value: 'ALL'   },
   { label: '책',          value: 'BOOK'  },
-  { label: '영화/드라마', value: 'MOVIE' },
+  { label: '영화',        value: 'MOVIE' },
+  { label: '드라마',      value: 'TV'    },
   { label: '애니',        value: 'ANIME' },
 ]
 
