@@ -2,6 +2,7 @@ package book_log.demo.config;
 
 import book_log.demo.controller.HighlightController;
 import book_log.demo.controller.StatisticsController;
+import book_log.demo.security.JwtTokenProvider;
 import book_log.demo.service.HighlightService;
 import book_log.demo.service.StatisticsService;
 import org.junit.jupiter.api.DisplayName;
@@ -44,6 +45,10 @@ class CorsConfigTest {
 
     @MockitoBean
     private StatisticsService statisticsService;
+
+    // SecurityConfig가 JWT 필터를 만들 때 필요하다 (이 테스트에서는 토큰을 쓰지 않는다)
+    @MockitoBean
+    private JwtTokenProvider jwtTokenProvider;
 
     private static MockHttpServletRequestBuilder preflight(String url, String origin, String method) {
         return options(url)

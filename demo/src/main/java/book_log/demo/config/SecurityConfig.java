@@ -10,12 +10,17 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import book_log.demo.security.JwtAuthenticationFilter;
+import book_log.demo.security.JwtTokenProvider;
 
 @Configuration
 @EnableWebSecurity
@@ -26,7 +31,7 @@ public class SecurityConfig {
     private String[] allowedOrigins;
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, JwtTokenProvider jwtTokenProvider) throws Exception {
         http
             // 1. CSRF 보안 비활성화 (POST 요청을 허용하기 위해 필수)
             .csrf(AbstractHttpConfigurer::disable)
@@ -34,11 +39,17 @@ public class SecurityConfig {
             // 2. CORS 활성화. 아래 corsConfigurationSource 빈을 시큐리티 필터 단계에서 적용한다 (preflight 포함)
             .cors(Customizer.withDefaults())
 
+            // 세션을 만들지 않는다 (인증 정보는 매 요청의 JWT로만 전달)
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
             // 3. 모든 경로에 대해 인증 없이 접근 허용 (개발 단계용)
             // TODO: task 19에서 authenticated 전환
             .authorizeHttpRequests(auth -> auth
                 .anyRequest().permitAll()
             )
+
+            // JWT 필터는 빈이 아니라 여기서 new로 만든다 (빈이면 서블릿 필터로 한 번 더 자동 등록됨)
+            .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)
 
             // 4. H2 콘솔 사용을 위한 프레임 옵션 비활성화
             .headers(headers -> headers
