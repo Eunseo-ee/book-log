@@ -10,6 +10,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -33,6 +35,7 @@ public class SecurityConfig {
             .cors(Customizer.withDefaults())
 
             // 3. 모든 경로에 대해 인증 없이 접근 허용 (개발 단계용)
+            // TODO: task 19에서 authenticated 전환
             .authorizeHttpRequests(auth -> auth
                 .anyRequest().permitAll()
             )
@@ -43,6 +46,12 @@ public class SecurityConfig {
             );
 
         return http.build();
+    }
+
+    // 비밀번호는 BCrypt 해시로만 저장한다
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
     // 전역 CORS 설정. 컨트롤러별 @CrossOrigin은 쓰지 않는다

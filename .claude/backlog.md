@@ -31,3 +31,6 @@
 - [ ] PUT /api/highlights/{id}가 저장용 DTO를 공유해 contentId @NotNull인데 서비스는 안 씀 → 다른 id를 보내도 200, 작품은 안 바뀜. 수정 전용 DTO 분리 또는 작품 변경 지원 결정 (10)
 - [ ] 하이라이트 카드 수정/삭제 버튼이 hover에서만 보여 터치 기기에서 못 누름 (10)
 - [ ] AddHighlightModal이 추가·수정을 겸하게 됨 → 이름 변경(HighlightFormModal 등) 검토 (10)
+- [ ] 비밀번호 상한 64자(문자 수)와 BCrypt 72바이트 제한 불일치: 한글 등 멀티바이트 비밀번호는 64자 이내여도 72바이트를 넘어 뒤쪽이 잘린 채 해시될 수 있음 (13)
+- [ ] 로그인 시도 횟수 제한(brute force 방어) 없음, 이메일 중복 허용, 아이디 대소문자 구분 정책 미정 (13)
+- [ ] DemoApplicationTests가 실제 PostgreSQL에 붙어 members 테이블을 생성함. 테스트 DB 분리 필요 (13, 기존 항목과 연결)
