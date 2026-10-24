@@ -19,7 +19,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import book_log.demo.config.SecurityConfig;
+import book_log.demo.dto.response.LoginResponseDto;
 import book_log.demo.dto.response.MemberResponseDto;
+import book_log.demo.security.JwtTokenProvider;
 import book_log.demo.exception.DuplicateUsernameException;
 import book_log.demo.exception.InvalidCredentialsException;
 import book_log.demo.service.AuthService;
@@ -36,6 +38,10 @@ class AuthControllerTest {
 
     @MockitoBean
     private AuthService authService;
+
+    // SecurityConfig가 JWT 필터를 만들 때 필요하다 (이 테스트에서는 토큰을 쓰지 않는다)
+    @MockitoBean
+    private JwtTokenProvider jwtTokenProvider;
 
     private static String registerJson(String username, String password, String email) {
         return "{\"username\":\"" + username + "\",\"password\":\"" + password + "\",\"email\":\"" + email + "\"}";
@@ -106,7 +112,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("로그인 성공은 200이고 password 필드가 없다")
     void loginResponseHasNoPassword() throws Exception {
-        when(authService.login(any())).thenReturn(new MemberResponseDto(1L, "alice"));
+        when(authService.login(any())).thenReturn(new LoginResponseDto(1L, "alice", "access-x", "refresh-x"));
 
         mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .content(loginJson("alice", PASSWORD)))

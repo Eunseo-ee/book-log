@@ -26,6 +26,8 @@ import book_log.demo.dto.response.MemberResponseDto;
 import book_log.demo.exception.DuplicateUsernameException;
 import book_log.demo.exception.InvalidCredentialsException;
 import book_log.demo.repository.MemberRepository;
+import book_log.demo.security.TestJwt;
+import book_log.demo.dto.response.LoginResponseDto;
 
 import static org.mockito.Mockito.mock;
 
@@ -42,7 +44,7 @@ class AuthServiceTest {
     void setUp() {
         memberRepository = mock(MemberRepository.class);
         passwordEncoder = new BCryptPasswordEncoder(4); // 테스트 속도를 위해 cost 최소
-        authService = new AuthService(memberRepository, passwordEncoder);
+        authService = new AuthService(memberRepository, passwordEncoder, TestJwt.provider());
     }
 
     @Test
@@ -105,7 +107,7 @@ class AuthServiceTest {
         ReflectionTestUtils.setField(member, "id", 7L);
         when(memberRepository.findByUsername("alice")).thenReturn(Optional.of(member));
 
-        MemberResponseDto result = authService.login(new LoginRequestDto("alice", RAW_PASSWORD));
+        LoginResponseDto result = authService.login(new LoginRequestDto("alice", RAW_PASSWORD));
 
         assertThat(result.getId()).isEqualTo(7L);
         assertThat(result.getUsername()).isEqualTo("alice");
