@@ -24,3 +24,8 @@
 - 입력값 검증은 컨트롤러 @Validated 대신 서비스에서 IllegalArgumentException을 던진다.
   (기존 GlobalExceptionHandler가 400 처리. @Validated는 ConstraintViolationException이 되어 500으로 샐 수 있음)
 - Redis 캐싱/비동기는 후순위.
+- 2026-10-24: JWT 필터는 요청마다 DB를 조회하지 않고 토큰의 claim(sub=userId, username, role)으로 AuthenticatedMember를 만든다. stateless 유지와 DB 부하 감소가 이유. 트레이드오프: 회원이 삭제되거나 role이 바뀌어도 access 토큰이 만료될 때까지는 이전 정보로 인증된다. 그래서 access 만료는 짧게 두고, 회원 존재 확인이 꼭 필요한 곳(refresh)만 DB를 조회한다 (task 14)
+- 2026-10-24: access/refresh는 같은 키로 서명하되 type claim으로 구분한다. 필터는 access만, /api/auth/refresh는 refresh만 인정한다. type이 없으면 refresh 토큰을 access처럼 쓸 수 있다 (task 12 발견 6번) (task 14)
+- 2026-10-24: JwtAuthenticationFilter는 토큰이 없거나 잘못돼도 예외 없이 인증 없이 통과시킨다. 지금은 permitAll이라 막을 대상이 없고, 인증 강제는 SecurityConfig의 authenticated가 맡는다(task 19). 필터는 빈이 아니라 SecurityConfig에서 new로 만들어 체인에만 넣는다 (@Component면 서블릿 필터로 자동 등록되어 체인 밖에서 한 번 더 실행될 수 있음) (task 14)
+- 2026-10-24: refresh는 새 access 토큰만 발급하고 refresh 토큰은 회전하지 않는다. 서버가 refresh를 저장하지 않아(stateless) 구현이 단순하지만, 로그아웃이나 탈취된 refresh 폐기가 불가능하고 만료 전까지 계속 유효하다. 재발급 시에는 회원 존재 여부만 DB로 확인한다. 저장소(DB/Redis) 기반 회전·폐기는 백로그 (task 14)
+- 2026-10-24: 가입 비밀번호는 문자 수(8~64)에 더해 UTF-8 72바이트 이하여야 한다. Spring Security 6.4.2의 BCrypt는 72바이트 초과분을 예외 없이 잘라 해시하므로, 한글 비밀번호의 뒷부분이 조용히 무시되는 것을 입력 단계에서 막는다. 로그인은 긴 입력이 와도 500 없이 기존과 같은 401이라 추가 조치가 필요 없었다 (task 14)

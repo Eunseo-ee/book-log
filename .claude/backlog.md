@@ -34,3 +34,7 @@
 - [ ] 비밀번호 상한 64자(문자 수)와 BCrypt 72바이트 제한 불일치: 한글 등 멀티바이트 비밀번호는 64자 이내여도 72바이트를 넘어 뒤쪽이 잘린 채 해시될 수 있음 (13)
 - [ ] 로그인 시도 횟수 제한(brute force 방어) 없음, 이메일 중복 허용, 아이디 대소문자 구분 정책 미정 (13)
 - [ ] DemoApplicationTests가 실제 PostgreSQL에 붙어 members 테이블을 생성함. 테스트 DB 분리 필요 (13, 기존 항목과 연결)
+- [ ] refresh 토큰을 서버에 저장하지 않아 로그아웃/폐기/탈취 대응이 불가능, refresh 회전도 없음. DB 또는 Redis에 refresh(또는 jti)를 저장하는 방식 검토 (14)
+- [ ] GlobalExceptionHandler의 catch-all(Exception)이 없는 경로 404(NoResourceFoundException)를 500으로 바꾼다. 본문이 비었거나 JSON이 깨진 요청(HttpMessageNotReadableException)도 같은 경로로 갈 가능성 있음(미확인) (14)
+- [ ] 위조/만료 토큰 요청마다 WARN 로그가 남아 인증 없는 사용자가 로그를 부풀릴 수 있음. 로그 레벨/샘플링 검토 (14)
+- [ ] /api/auth/refresh에도 호출 횟수 제한 없음 (로그인 제한 항목과 함께) (14)
