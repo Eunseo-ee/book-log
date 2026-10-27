@@ -22,6 +22,7 @@ import book_log.demo.DemoApplication;
 // 엔티티들 (패키지 경로 확인 필요!)
 import book_log.demo.domain.Content;
 import book_log.demo.domain.Highlight;
+import book_log.demo.domain.Member;
 
 import java.util.List;
 // Java 기본 유틸
@@ -46,11 +47,25 @@ class HighlightRepositoryTest {
     @Autowired
     private ContentRepository contentRepository;
 
+    @Autowired
+    private MemberRepository memberRepository;
+
+    // Content.member는 nullable=false라 작품마다 회원이 필요하다 (테스트 트랜잭션은 롤백되지만 실DB 데이터와 겹치지 않게 유니크한 아이디 사용)
+    private Member saveMember() {
+        String unique = java.util.UUID.randomUUID().toString().substring(0, 8);
+        return memberRepository.save(Member.builder()
+                .username("test-" + unique)
+                .password("not-a-real-hash")
+                .email(unique + "@example.com")
+                .build());
+    }
+
     @Test
     @DisplayName("하이라이트 저장 및 조회 테스트")
     void saveAndFindHighlight() {
         // 1. Given: 테스트 데이터 준비 (연관된 Content가 먼저 있어야 함)
         Content content = Content.builder()
+                .member(saveMember())
                 .title("테스트 책")
                 .authorOrDirector("은서")
                 .build();
@@ -90,8 +105,8 @@ class HighlightRepositoryTest {
     @DisplayName("특정 컨텐츠의 하이라이트 목록만 조회한다")
     void findByContentId() {
         // given
-        Content content1 = contentRepository.save(Content.builder().title("책 1").build());
-        Content content2 = contentRepository.save(Content.builder().title("책 2").build());
+        Content content1 = contentRepository.save(Content.builder().member(saveMember()).title("책 1").build());
+        Content content2 = contentRepository.save(Content.builder().member(saveMember()).title("책 2").build());
 
         highlightRepository.save(Highlight.builder().text("문장 1").content(content1).build());
         highlightRepository.save(Highlight.builder().text("문장 2").content(content1).build());
@@ -124,7 +139,7 @@ class HighlightRepositoryTest {
     @DisplayName("컨텐츠를 삭제하면 연관된 하이라이트 처리 확인")
     void deleteContentAndCheckHighlight() {
         // given
-        Content content = contentRepository.save(Content.builder().title("지워질 책").build());
+        Content content = contentRepository.save(Content.builder().member(saveMember()).title("지워질 책").build());
         Highlight highlight = Highlight.builder()
             .text("함께 지워질까?")
             .build();

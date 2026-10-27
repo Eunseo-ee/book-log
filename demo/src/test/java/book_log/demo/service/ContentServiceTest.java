@@ -2,8 +2,10 @@ package book_log.demo.service;
 
 import book_log.demo.domain.Category;
 import book_log.demo.domain.Content;
+import book_log.demo.domain.Member;
 import book_log.demo.dto.request.ContentRequestDto;
 import book_log.demo.repository.ContentRepository;
+import book_log.demo.repository.MemberRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,7 +13,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Optional;
+import java.sql.SQLException;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -23,6 +26,9 @@ class ContentServiceTest {
     
     @Mock
     private ContentRepository contentRepository; 
+
+    @Mock
+    private MemberRepository memberRepository;
 
     @InjectMocks
     private ContentService contentService;
@@ -51,7 +57,7 @@ class ContentServiceTest {
         });
 
         // when: 이제 DTO를 파라미터로 넘깁니다.
-        Long savedId = contentService.saveContent(requestDto);
+        Long savedId = contentService.saveContent(1L, requestDto);
 
         // then
         assertEquals(100L, savedId);
@@ -77,7 +83,7 @@ class ContentServiceTest {
                 .thenReturn(Content.builder().id(200L).build());
 
         // when
-        Long savedId = assertDoesNotThrow(() -> contentService.saveContent(requestDto));
+        Long savedId = assertDoesNotThrow(() -> contentService.saveContent(1L, requestDto));
 
         // then: 저장소에 넘어간 엔티티의 rating이 null인지 확인 (0점과 '평가 안 함' 구분)
         assertEquals(200L, savedId);
@@ -97,11 +103,75 @@ class ContentServiceTest {
                 .build();
 
         // 중복 체크 로직을 위해 mock 설정
-        when(contentRepository.findByExternalIdAndCategory(any(), any()))
-                .thenReturn(Optional.of(Content.builder().build()));
+        when(contentRepository.existsByMemberIdAndExternalIdAndCategory(1L, "movie_1", Category.MOVIE))
+                .thenReturn(true);
 
         // when & then
-        assertThrows(IllegalStateException.class, () -> contentService.saveContent(requestDto));
+        assertThrows(IllegalStateException.class, () -> contentService.saveContent(1L, requestDto));
+        verify(contentRepository, never()).save(any());
+    }
+
+    private ContentRequestDto movieDto() {
+        return ContentRequestDto.builder()
+                .title("같은 영화")
+                .externalId("movie_1")
+                .category(Category.MOVIE)
+                .viewDate(java.time.LocalDate.now())
+                .build();
+    }
+
+    @Test
+    @DisplayName("다른 회원이 같은 externalId+category를 저장했어도, 내 기록이 없으면 저장된다 (중복 체크는 회원 조건 포함)")
+    void saveContent_Success_SameContentDifferentMember() {
+        // 회원 1은 이미 저장했고 회원 2는 아직 저장하지 않은 상태
+        when(contentRepository.existsByMemberIdAndExternalIdAndCategory(1L, "movie_1", Category.MOVIE)).thenReturn(true);
+        when(contentRepository.existsByMemberIdAndExternalIdAndCategory(2L, "movie_1", Category.MOVIE)).thenReturn(false);
+        Member member2 = Member.builder().id(2L).build();
+        when(memberRepository.getReferenceById(2L)).thenReturn(member2);
+        when(contentRepository.save(any(Content.class))).thenReturn(Content.builder().id(300L).build());
+
+        Long savedId = contentService.saveContent(2L, movieDto());
+
+        assertEquals(300L, savedId);
+        org.mockito.ArgumentCaptor<Content> captor = org.mockito.ArgumentCaptor.forClass(Content.class);
+        verify(contentRepository).save(captor.capture());
+        assertSame(member2, captor.getValue().getMember());
+        assertThrows(IllegalStateException.class, () -> contentService.saveContent(1L, movieDto()));
+    }
+
+    @Test
+    @DisplayName("중복 체크 통과 후 INSERT에서 유니크 위반(SQLState 23505)이 나면 중복 예외로 변환한다 (동시 요청)")
+    void saveContent_ConcurrentUniqueViolation_becomesDuplicate() {
+        when(contentRepository.existsByMemberIdAndExternalIdAndCategory(1L, "movie_1", Category.MOVIE)).thenReturn(false);
+        // 실제로는 DIVE -> Hibernate ConstraintViolationException -> PSQLException 순으로 감싸져 온다
+        when(contentRepository.save(any(Content.class))).thenThrow(new DataIntegrityViolationException(
+                "could not execute statement",
+                new RuntimeException("constraint violation", new SQLException("duplicate key", "23505"))));
+
+        IllegalStateException e = assertThrows(IllegalStateException.class, () -> contentService.saveContent(1L, movieDto()));
+        assertEquals("이미 저장된 콘텐츠입니다.", e.getMessage());
+    }
+
+    @Test
+    @DisplayName("FK 위반(SQLState 23503, 없는 회원) 등 유니크가 아닌 무결성 오류는 변환하지 않고 그대로 던진다")
+    void saveContent_ForeignKeyViolation_propagates() {
+        when(contentRepository.existsByMemberIdAndExternalIdAndCategory(99L, "movie_1", Category.MOVIE)).thenReturn(false);
+        DataIntegrityViolationException fkViolation = new DataIntegrityViolationException(
+                "could not execute statement", new SQLException("fk violation", "23503"));
+        when(contentRepository.save(any(Content.class))).thenThrow(fkViolation);
+
+        DataIntegrityViolationException thrown =
+                assertThrows(DataIntegrityViolationException.class, () -> contentService.saveContent(99L, movieDto()));
+        assertSame(fkViolation, thrown);
+    }
+
+    @Test
+    @DisplayName("원인에 SQLException이 없는 무결성 오류도 변환하지 않는다")
+    void saveContent_IntegrityViolationWithoutSqlCause_propagates() {
+        when(contentRepository.existsByMemberIdAndExternalIdAndCategory(1L, "movie_1", Category.MOVIE)).thenReturn(false);
+        when(contentRepository.save(any(Content.class))).thenThrow(new DataIntegrityViolationException("unknown"));
+
+        assertThrows(DataIntegrityViolationException.class, () -> contentService.saveContent(1L, movieDto()));
     }
 
     @Test
@@ -113,7 +183,7 @@ class ContentServiceTest {
                 .build();
 
         // when & then: 서비스 내부에 validateRating 로직이 남아있어야 테스트가 통과합니다.
-        assertThrows(IllegalArgumentException.class, () -> contentService.saveContent(requestDto));
+        assertThrows(IllegalArgumentException.class, () -> contentService.saveContent(1L, requestDto));
     }
 
     @Test
@@ -128,7 +198,7 @@ class ContentServiceTest {
 
         // when & then
         assertThrows(IllegalArgumentException.class, () -> {
-            contentService.saveContent(requestDto);
+            contentService.saveContent(1L, requestDto);
         });
     }
 
@@ -143,7 +213,7 @@ class ContentServiceTest {
 
         // when & then
         // (서비스 로직에 미래 날짜 체크가 있다면)
-        assertThrows(IllegalArgumentException.class, () -> contentService.saveContent(requestDto));
+        assertThrows(IllegalArgumentException.class, () -> contentService.saveContent(1L, requestDto));
     }
 
     @Test

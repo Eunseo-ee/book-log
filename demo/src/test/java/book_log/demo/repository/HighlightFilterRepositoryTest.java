@@ -3,6 +3,7 @@ package book_log.demo.repository;
 import book_log.demo.domain.Category;
 import book_log.demo.domain.Content;
 import book_log.demo.domain.Highlight;
+import book_log.demo.domain.Member;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceUnitUtil;
 import org.junit.jupiter.api.DisplayName;
@@ -43,10 +44,24 @@ class HighlightFilterRepositoryTest {
     private ContentRepository contentRepository;
 
     @Autowired
+    private MemberRepository memberRepository;
+
+    @Autowired
     private EntityManager em;
+
+    private Member member;
+
+    private Member member() {
+        if (member == null) {
+            member = memberRepository.save(Member.builder()
+                    .username("tester").password("not-a-real-hash").email("tester@example.com").build());
+        }
+        return member;
+    }
 
     private Content saveContent(String title, Category category, LocalDate viewDate) {
         return contentRepository.save(Content.builder()
+                .member(member())
                 .title(title)
                 .category(category)
                 .viewDate(viewDate)

@@ -5,6 +5,12 @@ import lombok.*;
 import java.time.LocalDate;
 
 @Entity
+@Table(
+    name = "content",
+    uniqueConstraints = @UniqueConstraint(
+        name = "uk_content_member_external_category",
+        columnNames = {"member_id", "external_id", "category"}),
+    indexes = @Index(name = "idx_content_member_view_date", columnList = "member_id, view_date"))
 @Getter 
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // 기본 생성자 접근 제한
 @AllArgsConstructor // 빌더를 위한 전체 생성자
@@ -28,10 +34,10 @@ public class Content extends BaseTimeEntity{
     private Double rating;
     private LocalDate viewDate;
 
-    // 임시 (JWT 병합 시 교체)
-    @Column(name = "user_id")
-    @Builder.Default
-    private Long userId = 1L;
+    // 기록의 주인. 목록에서 member 필드를 직접 쓰지 않는 쿼리가 많아 LAZY로 두고, c.member.id 조건은 조인 없이 FK 컬럼으로 처리된다
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id", nullable = false)
+    private Member member;
 
     @Column(columnDefinition = "TEXT")
     private String comment; // 사용자의 상세 감상평 (길어질 수 있으므로 TEXT)

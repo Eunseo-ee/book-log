@@ -27,7 +27,9 @@ public class ContentController {
     @PostMapping
     public ResponseEntity<Long> saveContent(@Valid @RequestBody ContentRequestDto requestDto) {
         // @RequestBody : 클라이언트가 보낸 JSON 데이터를 Content 객체로 변환
-        Long savedId = contentService.saveContent(requestDto);
+        // 임시로 회원 ID를 1L로 설정 (인증 연동 시 교체)
+        Long memberId = 1L;
+        Long savedId = contentService.saveContent(memberId, requestDto);
 
         // 생성 성공 시 201 Created 상태 코드와 저장된 리소스의 경로 반환
         return ResponseEntity.created(URI.create("/api/contents/" + savedId)).body(savedId);
@@ -42,8 +44,11 @@ public class ContentController {
             @RequestParam String externalId,
             @RequestParam Category category) {
 
+            // 임시로 회원 ID를 1L로 설정 (인증 연동 시 교체)
+            Long memberId = 1L;
+
             // 이미 저장되어 있다면 true, 아니면 false 반환
-            boolean isSaved = contentService.isAlreadySaved(externalId, category);
+            boolean isSaved = contentService.isAlreadySaved(memberId, externalId, category);
             return ResponseEntity.ok(isSaved);
         }
 

@@ -31,10 +31,10 @@ public class CalendarController {
         @RequestParam(name = "month") @Min(1) @Max(12) int month
         // 실제 서비스 시에는 @AuthenticationPrincipal 등을 통해 로그인한 유저 ID 가져오기
     ) {
-        // 임시로 유저 ID를 1L로 설정 (로그인 구현 방식 따라 변경 필요)
-        Long userId = 1L;
+        // 임시로 회원 ID를 1L로 설정 (로그인 구현 방식 따라 변경 필요)
+        Long memberId = 1L;
 
-        CalendarResponse response = calendarService.getMonthlyActivity(userId, year, month);
+        CalendarResponse response = calendarService.getMonthlyActivity(memberId, year, month);
 
         return ResponseEntity.ok(response);
     }

@@ -17,10 +17,10 @@ public class CalendarService {
 
     // 특정 월의 활동 기록 날짜 조회
     @Transactional(readOnly = true)
-    public CalendarResponse getMonthlyActivity(Long userId, int year, int month) {
+    public CalendarResponse getMonthlyActivity(Long memberId, int year, int month) {
         
         // 1. 리포지토리에서 day 리스트 가져오기
-        List<Integer> activeDays = contentRepository.findActiveDays(userId, year, month);
+        List<Integer> activeDays = contentRepository.findActiveDays(memberId, year, month);
 
         // 2. 숫자 리스트를 DayActivity 객체 리스트로 반환(Java Stream 활용)
         List<CalendarResponse.DayActivity> dayActivities = activeDays.stream()

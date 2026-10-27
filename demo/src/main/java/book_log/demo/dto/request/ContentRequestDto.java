@@ -4,6 +4,7 @@ import java.time.LocalDate;
 
 import book_log.demo.domain.Category;
 import book_log.demo.domain.Content;
+import book_log.demo.domain.Member;
 import book_log.demo.domain.Status;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -43,8 +44,9 @@ public class ContentRequestDto {
     
     private Status status; // WATCHING, COMPLETED 등
 
-    public Content toEntity() {
+    public Content toEntity(Member member) {
         return Content.builder()
+                .member(member)
                 .title(this.title)
                 .authorOrDirector(this.authorOrDirector)
                 .thumbnailUrl(this.thumbnailUrl)

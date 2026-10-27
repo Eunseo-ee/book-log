@@ -9,17 +9,17 @@ import org.junit.jupiter.api.Test;
 
 import book_log.demo.domain.Category;
 import book_log.demo.domain.Content;
+import book_log.demo.domain.Member;
 import book_log.demo.domain.Status;
 
 /**
- * 캘린더 조회(findActiveDays)는 user_id = 1 조건으로 거른다.
- * 저장 경로(toEntity → Content.builder())에서 userId가 null로 빠지지 않는지 서버/DB 없이 확인한다.
+ * 저장 경로(toEntity → Content.builder())에서 member가 null로 빠지지 않는지 서버/DB 없이 확인한다.
  */
 class ContentRequestDtoTest {
 
     @Test
-    @DisplayName("toEntity로 만든 Content의 userId는 기본값 1L이다")
-    void toEntityKeepsDefaultUserId() {
+    @DisplayName("toEntity로 만든 Content에는 넘겨준 member가 들어간다")
+    void toEntitySetsMember() {
         // given
         ContentRequestDto dto = ContentRequestDto.builder()
                 .title("소년이 온다")
@@ -30,14 +30,15 @@ class ContentRequestDtoTest {
                 .build();
 
         // when
-        Content content = dto.toEntity();
+        Member member = Member.builder().id(7L).username("u").password("p").email("e@example.com").build();
+        Content content = dto.toEntity(member);
 
         // then
-        assertThat(content.getUserId()).isEqualTo(1L);
+        assertThat(content.getMember()).isSameAs(member);
     }
 
     @Test
-    @DisplayName("userId 기본값을 넣어도 highlights 기본값(빈 리스트)은 그대로 유지된다")
+    @DisplayName("member를 넣어도 highlights 기본값(빈 리스트)은 그대로 유지된다")
     void toEntityKeepsDefaultHighlights() {
         // given
         ContentRequestDto dto = ContentRequestDto.builder()
@@ -46,7 +47,7 @@ class ContentRequestDtoTest {
                 .build();
 
         // when
-        Content content = dto.toEntity();
+        Content content = dto.toEntity(Member.builder().id(7L).build());
 
         // then
         assertThat(content.getHighlights()).isNotNull().isEmpty();

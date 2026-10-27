@@ -8,7 +8,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
-import java.util.Optional;
 import java.util.List;
 
 @Repository
@@ -32,9 +31,9 @@ public interface ContentRepository extends JpaRepository<Content, Long> {
     }
 
     /**
-     * 중복 저장 방지를 위한 조회 메서드
+     * 중복 저장 방지를 위한 조회 메서드 (사용자별: 다른 회원이 같은 작품을 저장했어도 중복이 아니다)
      */
-    Optional<Content> findByExternalIdAndCategory(String externalId, Category category);
+    boolean existsByMemberIdAndExternalIdAndCategory(Long memberId, String externalId, Category category);
 
     /**
      * 검색 결과 여러 건의 저장 여부를 한 번의 IN 쿼리로 확인 (건별 조회 N+1 방지)
@@ -57,13 +56,13 @@ public interface ContentRepository extends JpaRepository<Content, Long> {
     @Query(value = """ 
         SELECT DISTINCT CAST(EXTRACT(DAY FROM c.view_date) AS INTEGER)
         FROM content c 
-        WHERE c.user_id = :userId 
+        WHERE c.member_id = :memberId 
           AND EXTRACT(YEAR FROM c.view_date) = :year 
           AND EXTRACT(MONTH FROM c.view_date) = :month
         ORDER BY 1
         """, nativeQuery = true)
     List<Integer> findActiveDays(
-        @Param("userId") Long userId,
+        @Param("memberId") Long memberId,
         @Param("year") int year,
         @Param("month") int month
     );
