@@ -1,5 +1,6 @@
 package book_log.demo.service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -19,8 +20,11 @@ public class CalendarService {
     @Transactional(readOnly = true)
     public CalendarResponse getMonthlyActivity(Long memberId, int year, int month) {
         
+        // [월 시작일, 다음 달 시작일) 반개구간
+        LocalDate start = LocalDate.of(year, month, 1);
+
         // 1. 리포지토리에서 day 리스트 가져오기
-        List<Integer> activeDays = contentRepository.findActiveDays(memberId, year, month);
+        List<Integer> activeDays = contentRepository.findActiveDays(memberId, start, start.plusMonths(1));
 
         // 2. 숫자 리스트를 DayActivity 객체 리스트로 반환(Java Stream 활용)
         List<CalendarResponse.DayActivity> dayActivities = activeDays.stream()

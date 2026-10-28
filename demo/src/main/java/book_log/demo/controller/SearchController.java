@@ -33,6 +33,8 @@ public class SearchController {
             @RequestParam String query,
             @RequestParam(defaultValue = "1") int page) {
         
-        return ResponseEntity.ok(searchService.search(category, query, page));
+        // 임시로 회원 ID를 1L로 설정 (인증 연동 시 교체, task 19)
+        Long memberId = 1L;
+        return ResponseEntity.ok(searchService.search(memberId, category, query, page));
     }
 }

@@ -1,5 +1,6 @@
 package book_log.demo.service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,7 +34,7 @@ public class CalendarServiceTest {
         int month = 4;
 
         // Mock 객체의 동작 정의
-        given(contentRepository.findActiveDays(userId, year, month))
+        given(contentRepository.findActiveDays(userId, LocalDate.of(year, month, 1), LocalDate.of(year, month, 1).plusMonths(1)))
                 .willReturn(List.of(4,10,15));
 
         // when (실제 서비스 호출)
@@ -54,7 +55,7 @@ public class CalendarServiceTest {
         int year = 2026;
         int month = 1; // 기록이 없는 달 가정
 
-        given(contentRepository.findActiveDays(userId, year, month))
+        given(contentRepository.findActiveDays(userId, LocalDate.of(year, month, 1), LocalDate.of(year, month, 1).plusMonths(1)))
                 .willReturn(List.of()); // 빈 리스트 반환
 
         // when
@@ -71,7 +72,7 @@ public class CalendarServiceTest {
         //given
         List<Integer> mockDays = List.of(1,15,30);
 
-        given(contentRepository.findActiveDays(1L, 2026, 4))
+        given(contentRepository.findActiveDays(1L, LocalDate.of(2026, 4, 1), LocalDate.of(2026, 5, 1)))
                 .willReturn(mockDays);
 
         // when

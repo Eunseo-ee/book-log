@@ -83,7 +83,7 @@ class CorsConfigTest {
     @Test
     @DisplayName("실제 요청도 허용 origin이면 통과하고 Allow-Origin 헤더가 붙는다")
     void allowedActualRequest() throws Exception {
-        when(highlightService.getHighlights(any(), any())).thenReturn(List.of());
+        when(highlightService.getHighlights(any(), any(), any())).thenReturn(List.of());
 
         mockMvc.perform(get("/api/highlights").header(HttpHeaders.ORIGIN, ALLOWED))
                 .andExpect(status().isOk())

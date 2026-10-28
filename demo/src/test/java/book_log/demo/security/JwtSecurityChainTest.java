@@ -87,7 +87,7 @@ class JwtSecurityChainTest {
     @Test
     @DisplayName("위조/만료/깨진 토큰이 담긴 요청도 permitAll 경로에서는 401/500 없이 정상 처리된다")
     void badTokensDoNotBreakPermitAllPaths() throws Exception {
-        when(highlightService.getHighlights(any(), any())).thenReturn(List.of());
+        when(highlightService.getHighlights(any(), any(), any())).thenReturn(List.of());
         JwtTokenProvider expiring = new JwtTokenProvider(
                 TestJwt.properties(TestJwt.FAKE_SECRET, -1_000L, TestJwt.REFRESH_MS));
         JwtTokenProvider otherSecret = new JwtTokenProvider(

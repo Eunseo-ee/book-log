@@ -23,14 +23,14 @@ public class SearchService {
     // 캐싱은 여기(조합 결과)가 아니라 Provider 단위에서 한다. (TmdbSearchService.search 참고)
     // isSaved는 '사용자의 DB 상태'라서 10분 TTL 캐시에 넣으면 낡은 값이 보인다.
     // 그래서 캐시를 거친 Provider 결과에 대해, 캐시 바깥(이 메서드)에서 매 요청마다 새로 채운다.
-    public SearchResponse search(Category category, String query, int page) {
+    public SearchResponse search(Long memberId, Category category, String query, int page) {
         SearchResponse response = searchProviders(category, query, page);
-        return markSavedStatus(response);
+        return markSavedStatus(memberId, response);
     }
 
     // 저장 여부를 한 번의 IN 쿼리로 조회해서 결과마다 채운다.
     // 페이지 정보는 그대로 두고 results만 교체한 새 SearchResponse를 만든다.
-    private SearchResponse markSavedStatus(SearchResponse response) {
+    private SearchResponse markSavedStatus(Long memberId, SearchResponse response) {
         List<UnifiedSearchResponse> results = response.getResults();
         if (results == null || results.isEmpty()) {
             return response;
@@ -42,7 +42,7 @@ public class SearchService {
                 .distinct()
                 .toList();
 
-        Set<SavedKey> savedKeys = contentService.findSavedKeys(externalIds);
+        Set<SavedKey> savedKeys = contentService.findSavedKeys(memberId, externalIds);
 
         List<UnifiedSearchResponse> marked = results.stream()
                 .map(r -> r.toBuilder()

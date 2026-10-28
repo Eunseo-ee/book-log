@@ -6,11 +6,19 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.Objects;
 
 // 하이라이트 목록의 선택 조건. 조건 값이 없으면 null을 반환해 and()에서 빠지게 한다.
 public final class HighlightSpecifications {
 
     private HighlightSpecifications() {
+    }
+
+    // 부모 Content의 소유자가 memberId인 하이라이트. 필수 조건이라 null이면 예외를 던진다
+    // (null을 "조건 없음"으로 처리하면 전체 회원의 데이터가 노출된다)
+    public static Specification<Highlight> ownedBy(Long memberId) {
+        Objects.requireNonNull(memberId, "memberId");
+        return (root, query, cb) -> cb.equal(root.get("content").get("member").get("id"), memberId);
     }
 
     // 부모 Content.viewDate가 [year-01-01, year+1-01-01) 범위인 하이라이트

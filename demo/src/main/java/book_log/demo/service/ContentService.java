@@ -39,11 +39,11 @@ public class ContentService {
     }
 
     // 검색 결과 여러 건의 '저장됨' 표시용: 주어진 externalId 중 DB에 있는 (externalId, category) 쌍을 한 번에 반환
-    public Set<SavedKey> findSavedKeys(Collection<String> externalIds) {
+    public Set<SavedKey> findSavedKeys(Long memberId, Collection<String> externalIds) {
         if (externalIds == null || externalIds.isEmpty()) {
             return Set.of(); // 빈 IN 절 쿼리 방지
         }
-        return contentRepository.findByExternalIdIn(externalIds).stream()
+        return contentRepository.findByMemberIdAndExternalIdIn(memberId, externalIds).stream()
                 .map(k -> new SavedKey(k.getExternalId(), k.getCategory()))
                 .collect(Collectors.toSet());
     }
@@ -94,28 +94,33 @@ public class ContentService {
     }
 
     @Transactional(readOnly = true)
-    public List<ContentResponseDto> getFilteredContents(Integer year, Category category) {
+    public List<ContentResponseDto> getFilteredContents(Long memberId, Integer year, Category category) {
         
         List<Content> contents;
 
         if (year != null && category != null) {
             // 둘 다 있을 때
-            contents = contentRepository.findByYearAndCategory(year, category);
+            contents = contentRepository.findByYearAndCategory(memberId, yearStart(year), yearStart(year).plusYears(1), category);
         } else if (year != null) {
             // 연도만 있을 때
-            contents = contentRepository.findByYear(year);
+            contents = contentRepository.findByYear(memberId, yearStart(year), yearStart(year).plusYears(1));
         } else if (category != null) {
             // 카테고리만 있을 때
-            contents = contentRepository.findByCategory(category);
+            contents = contentRepository.findByMemberIdAndCategory(memberId, category);
         } else {
-            // 아무 조건 없을 때(전체 조회)
-            contents = contentRepository.findAll();
+            // 아무 조건 없을 때(해당 회원의 전체 조회)
+            contents = contentRepository.findByMemberId(memberId);
         }
 
         return contents.stream()
                 .map(ContentResponseDto::new)
                 .collect(Collectors.toList());
 
+    }
+
+    // 연도 필터는 [1/1, 다음 해 1/1) 범위로 건다
+    private static LocalDate yearStart(int year) {
+        return LocalDate.of(year, 1, 1);
     }
 
 }

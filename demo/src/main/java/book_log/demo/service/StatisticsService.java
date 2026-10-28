@@ -1,7 +1,6 @@
 package book_log.demo.service;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,17 +21,19 @@ public class StatisticsService {
     private final ContentRepository contentRepository;
 
     @Transactional(readOnly = true)
-    public StatisticsResponse getMonthlyStatistics(int year, int month) {
+    public StatisticsResponse getMonthlyStatistics(Long memberId, int year, int month) {
         // 1. 날짜 문자열 생성 (YYYY-MM)
         String currentMonth = String.format("%04d-%02d", year, month);
 
         // 2. 전월 계산
-        LocalDate targetDate = LocalDate.of(year, month, 1);
-        String previousMonth = targetDate.minusMonths(1).format(DateTimeFormatter.ofPattern("yyyy-MM"));
+        // 조회 범위는 모두 [시작일, 다음 달 시작일) 반개구간
+        LocalDate start = LocalDate.of(year, month, 1);
+        LocalDate end = start.plusMonths(1);
+        LocalDate prevStart = start.minusMonths(1);
 
         // 3. 데이터 조회 (Interface Projection 사용)
-        List<ContentRepository.CategoryStatInterface> categoryResults = contentRepository.countByCategoryInterface(currentMonth);
-        List<ContentRepository.GenreStatInterface> genreResults = contentRepository.countByGenreInterface(currentMonth);
+        List<ContentRepository.CategoryStatInterface> categoryResults = contentRepository.countByCategoryInterface(memberId, start, end);
+        List<ContentRepository.GenreStatInterface> genreResults = contentRepository.countByGenreInterface(memberId, start, end);
 
         // 4. Interface 결과를 DTO로 변환 (Stream API 활용)
         List<CategoryStat> categoryStats = categoryResults.stream()
@@ -44,12 +45,12 @@ public class StatisticsService {
                 .toList();
 
         // 5. 평균 별점 가공
-        Double rawAvgRating = contentRepository.getAverageRating(currentMonth);
+        Double rawAvgRating = contentRepository.getAverageRating(memberId, start, end);
         double averageRating = (rawAvgRating != null) ? Math.round(rawAvgRating * 10) / 10.0 : 0.0;
 
         // 6. 활동량 비교
-        long currentCount = contentRepository.countByMonth(currentMonth);
-        long previousCount = contentRepository.countByMonth(previousMonth);
+        long currentCount = contentRepository.countByMonth(memberId, start, end);
+        long previousCount = contentRepository.countByMonth(memberId, prevStart, start);
         double growthRate = calculateGrowthRate(currentCount, previousCount);
 
         // 7. topCategory 추출
@@ -57,7 +58,7 @@ public class StatisticsService {
 
         // 8. mostActiveDay 가공
         String mostActiveDay = "기록 없음";
-        Object[] dayResult = contentRepository.findMostActiveDay(currentMonth);
+        Object[] dayResult = contentRepository.findMostActiveDay(memberId, start, end);
 
         if (dayResult != null && dayResult.length > 0 && dayResult[0] != null) {
             // PostgreSQL DOW: 0(일) ~ 6(토)

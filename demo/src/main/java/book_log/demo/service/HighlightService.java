@@ -73,13 +73,14 @@ public class HighlightService {
     }
 
     // 모음집 목록 조회: year(Content.viewDate 기준), category 모두 선택
-    public List<HighlightResponseDto> getHighlights(Integer year, Category category) {
+    public List<HighlightResponseDto> getHighlights(Long memberId, Integer year, Category category) {
         if (year != null && (year < MIN_YEAR || year > MAX_YEAR)) {
             throw new IllegalArgumentException("연도는 " + MIN_YEAR + "~" + MAX_YEAR + " 사이여야 합니다. year=" + year);
         }
 
         Specification<Highlight> spec = Specification
-                .where(HighlightSpecifications.viewYear(year))
+                .where(HighlightSpecifications.ownedBy(memberId))
+                .and(HighlightSpecifications.viewYear(year))
                 .and(HighlightSpecifications.categoryIn(resolveCategories(category)));
         Sort sort = Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"));
 

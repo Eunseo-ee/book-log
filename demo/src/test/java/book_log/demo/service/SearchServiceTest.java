@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -53,10 +54,10 @@ class SearchServiceTest {
 
         when(provider.search(any(), anyString(), anyInt()))
                 .thenReturn(page(List.of(saved, sameIdOtherCategory, notSaved)));
-        when(contentService.findSavedKeys(anyCollection()))
+        when(contentService.findSavedKeys(eq(1L), anyCollection()))
                 .thenReturn(Set.of(new SavedKey("550", Category.MOVIE)));
 
-        SearchResponse response = searchService.search(Category.MOVIE, "query", 1);
+        SearchResponse response = searchService.search(1L, Category.MOVIE, "query", 1);
 
         assertThat(response.getResults()).extracting(UnifiedSearchResponse::getIsSaved)
                 .containsExactly(true, false, false);
@@ -67,9 +68,9 @@ class SearchServiceTest {
     void keepsPaginationInfo() {
         when(provider.search(any(), anyString(), anyInt()))
                 .thenReturn(page(List.of(result("550", "파이트 클럽", Category.MOVIE))));
-        when(contentService.findSavedKeys(anyCollection())).thenReturn(Set.of());
+        when(contentService.findSavedKeys(eq(1L), anyCollection())).thenReturn(Set.of());
 
-        SearchResponse response = searchService.search(Category.MOVIE, "query", 2);
+        SearchResponse response = searchService.search(1L, Category.MOVIE, "query", 2);
 
         assertThat(response.getCurrentPage()).isEqualTo(2);
         assertThat(response.getTotalPages()).isEqualTo(5);
@@ -82,10 +83,10 @@ class SearchServiceTest {
         UnifiedSearchResponse original = result("550", "파이트 클럽", Category.MOVIE);
 
         when(provider.search(any(), anyString(), anyInt())).thenReturn(page(List.of(original)));
-        when(contentService.findSavedKeys(anyCollection()))
+        when(contentService.findSavedKeys(eq(1L), anyCollection()))
                 .thenReturn(Set.of(new SavedKey("550", Category.MOVIE)));
 
-        SearchResponse response = searchService.search(Category.MOVIE, "query", 1);
+        SearchResponse response = searchService.search(1L, Category.MOVIE, "query", 1);
 
         UnifiedSearchResponse marked = response.getResults().get(0);
         assertThat(marked.getIsSaved()).isTrue();
@@ -100,12 +101,12 @@ class SearchServiceTest {
         UnifiedSearchResponse cachedItem = result("550", "파이트 클럽", Category.MOVIE);
 
         when(provider.search(any(), anyString(), anyInt())).thenReturn(page(List.of(cachedItem)));
-        when(contentService.findSavedKeys(anyCollection()))
+        when(contentService.findSavedKeys(eq(1L), anyCollection()))
                 .thenReturn(Set.of())
                 .thenReturn(Set.of(new SavedKey("550", Category.MOVIE)));
 
-        boolean before = searchService.search(Category.MOVIE, "query", 1).getResults().get(0).getIsSaved();
-        boolean after = searchService.search(Category.MOVIE, "query", 1).getResults().get(0).getIsSaved();
+        boolean before = searchService.search(1L, Category.MOVIE, "query", 1).getResults().get(0).getIsSaved();
+        boolean after = searchService.search(1L, Category.MOVIE, "query", 1).getResults().get(0).getIsSaved();
 
         assertThat(before).isFalse();
         assertThat(after).isTrue();
@@ -118,13 +119,13 @@ class SearchServiceTest {
                 result("550", "A", Category.MOVIE),
                 result("550", "B", Category.TV),
                 result(null, "ID 없음", Category.BOOK))));
-        when(contentService.findSavedKeys(anyCollection())).thenReturn(Set.of());
+        when(contentService.findSavedKeys(eq(1L), anyCollection())).thenReturn(Set.of());
 
-        SearchResponse response = searchService.search(Category.ALL, "query", 1);
+        SearchResponse response = searchService.search(1L, Category.ALL, "query", 1);
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Collection<String>> captor = ArgumentCaptor.forClass(Collection.class);
-        verify(contentService, times(1)).findSavedKeys(captor.capture());
+        verify(contentService, times(1)).findSavedKeys(eq(1L), captor.capture());
         assertThat(captor.getValue()).containsExactly("550");
         // externalId가 없는 결과도 응답에서 사라지지 않고 isSaved=false로 내려간다
         assertThat(response.getResults()).hasSize(3);
@@ -136,10 +137,10 @@ class SearchServiceTest {
     void emptyResults_skipsDbLookup() {
         when(provider.search(any(), anyString(), anyInt())).thenReturn(page(List.of()));
 
-        SearchResponse response = searchService.search(Category.MOVIE, "query", 1);
+        SearchResponse response = searchService.search(1L, Category.MOVIE, "query", 1);
 
         assertThat(response.getResults()).isEmpty();
-        verify(contentService, never()).findSavedKeys(any());
+        verify(contentService, never()).findSavedKeys(any(), any());
     }
 
     @Test
@@ -148,10 +149,10 @@ class SearchServiceTest {
         SearchResponse noResults = SearchResponse.builder().build();
         when(provider.search(any(), anyString(), anyInt())).thenReturn(noResults);
 
-        SearchResponse response = searchService.search(Category.MOVIE, "query", 1);
+        SearchResponse response = searchService.search(1L, Category.MOVIE, "query", 1);
 
         assertThat(response).isSameAs(noResults);
-        verify(contentService, never()).findSavedKeys(any());
+        verify(contentService, never()).findSavedKeys(any(), any());
     }
 
     // ---- helpers ----

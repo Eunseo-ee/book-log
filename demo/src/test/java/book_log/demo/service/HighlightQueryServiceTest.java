@@ -48,7 +48,7 @@ class HighlightQueryServiceTest {
         when(highlightRepository.findAll(any(Specification.class), any(Sort.class)))
                 .thenReturn(List.of(highlight));
 
-        List<HighlightResponseDto> result = highlightService.getHighlights(2026, Category.ANIME);
+        List<HighlightResponseDto> result = highlightService.getHighlights(1L, 2026, Category.ANIME);
 
         assertThat(result).hasSize(1);
         HighlightResponseDto dto = result.get(0);
@@ -69,7 +69,7 @@ class HighlightQueryServiceTest {
     void requestsLatestFirstSort() {
         when(highlightRepository.findAll(any(Specification.class), any(Sort.class))).thenReturn(List.of());
 
-        highlightService.getHighlights(null, null);
+        highlightService.getHighlights(1L, null, null);
 
         verify(highlightRepository).findAll(any(Specification.class),
                 eq(Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"))));
@@ -81,7 +81,7 @@ class HighlightQueryServiceTest {
     void emptyResult() {
         when(highlightRepository.findAll(any(Specification.class), any(Sort.class))).thenReturn(List.of());
 
-        assertThat(highlightService.getHighlights(null, null)).isEmpty();
+        assertThat(highlightService.getHighlights(1L, null, null)).isEmpty();
     }
 
     @ParameterizedTest
@@ -89,7 +89,7 @@ class HighlightQueryServiceTest {
     @DisplayName("범위(1900~2100) 밖 연도는 조회 전에 거절한다")
     @SuppressWarnings("unchecked")
     void rejectsInvalidYear(int year) {
-        assertThatThrownBy(() -> highlightService.getHighlights(year, null))
+        assertThatThrownBy(() -> highlightService.getHighlights(1L, year, null))
                 .isInstanceOf(IllegalArgumentException.class);
 
         verify(highlightRepository, never()).findAll(any(Specification.class), any(Sort.class));

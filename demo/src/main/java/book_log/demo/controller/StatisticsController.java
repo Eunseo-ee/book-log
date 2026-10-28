@@ -37,7 +37,9 @@ public class StatisticsController {
                 int targetYear = (year != null) ? year : LocalDate.now().getYear();
                 int targetMonth = (month != null) ? month : LocalDate.now().getMonthValue();
                 
-                StatisticsResponse response = statisticsService.getMonthlyStatistics(targetYear, targetMonth);
+                // 임시로 회원 ID를 1L로 설정 (인증 연동 시 교체, task 19)
+                Long memberId = 1L;
+                StatisticsResponse response = statisticsService.getMonthlyStatistics(memberId, targetYear, targetMonth);
                 return ResponseEntity.ok(response);
             }
 

@@ -223,11 +223,11 @@ class ContentServiceTest {
             @Override public String getExternalId() { return "550"; }
             @Override public Category getCategory() { return Category.MOVIE; }
         };
-        when(contentRepository.findByExternalIdIn(java.util.List.of("550", "999")))
+        when(contentRepository.findByMemberIdAndExternalIdIn(1L, java.util.List.of("550", "999")))
                 .thenReturn(java.util.List.of(row));
 
         java.util.Set<ContentService.SavedKey> result =
-                contentService.findSavedKeys(java.util.List.of("550", "999"));
+                contentService.findSavedKeys(1L, java.util.List.of("550", "999"));
 
         assertEquals(java.util.Set.of(new ContentService.SavedKey("550", Category.MOVIE)), result);
     }
@@ -235,9 +235,9 @@ class ContentServiceTest {
     @Test
     @DisplayName("externalId 목록이 비어 있으면 DB를 조회하지 않고 빈 집합을 반환한다")
     void findSavedKeys_emptyInput_skipsQuery() {
-        assertTrue(contentService.findSavedKeys(java.util.List.of()).isEmpty());
-        assertTrue(contentService.findSavedKeys(null).isEmpty());
+        assertTrue(contentService.findSavedKeys(1L, java.util.List.of()).isEmpty());
+        assertTrue(contentService.findSavedKeys(1L, null).isEmpty());
 
-        verify(contentRepository, never()).findByExternalIdIn(any());
+        verify(contentRepository, never()).findByMemberIdAndExternalIdIn(any(), any());
     }
 }

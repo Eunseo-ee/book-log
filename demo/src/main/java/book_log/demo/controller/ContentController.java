@@ -57,7 +57,9 @@ public class ContentController {
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Category category) {
 
-                List<ContentResponseDto> response = contentService.getFilteredContents(year, category);
+                // 임시로 회원 ID를 1L로 설정 (인증 연동 시 교체, task 19)
+                Long memberId = 1L;
+                List<ContentResponseDto> response = contentService.getFilteredContents(memberId, year, category);
 
                 return ResponseEntity.ok(response);
             }

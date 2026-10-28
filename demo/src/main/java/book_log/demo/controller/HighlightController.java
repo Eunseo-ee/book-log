@@ -35,7 +35,9 @@ public class HighlightController {
     public ResponseEntity<List<HighlightResponseDto>> getHighlights(
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Category category) {
-        return ResponseEntity.ok(highlightService.getHighlights(year, category));
+        // 임시로 회원 ID를 1L로 설정 (인증 연동 시 교체, task 19)
+        Long memberId = 1L;
+        return ResponseEntity.ok(highlightService.getHighlights(memberId, year, category));
     }
 
     @PostMapping
