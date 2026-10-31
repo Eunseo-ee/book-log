@@ -38,3 +38,6 @@
 - [ ] GlobalExceptionHandler의 catch-all(Exception)이 없는 경로 404(NoResourceFoundException)를 500으로 바꾼다. 본문이 비었거나 JSON이 깨진 요청(HttpMessageNotReadableException)도 같은 경로로 갈 가능성 있음(미확인) (14)
 - [ ] 위조/만료 토큰 요청마다 WARN 로그가 남아 인증 없는 사용자가 로그를 부풀릴 수 있음. 로그 레벨/샘플링 검토 (14)
 - [ ] /api/auth/refresh에도 호출 횟수 제한 없음 (로그인 제한 항목과 함께) (14)
+- [ ] 하이라이트 update/delete 소유자 확인이 highlight 조회 후 content(LAZY)를 한 번 더 조회한다(쿼리 2회). 필요하면 findById에 @EntityGraph(content) 또는 memberId 조건 쿼리로 줄이기 (18)
+- [ ] 403/404 구분은 id 열거를 허용한다. 하이라이트 id가 순차 Long이라 외부에 노출 가능. 둘 다 404로 통일할지 인증 task 이후 재검토 (18)
+- [ ] HighlightServiceTest.saveHighlight_Fail_TooLongText는 서비스에 길이 검증이 없고 mock이 빈 Optional을 줘서 IllegalArgumentException(없는 콘텐츠)이 나와 통과한다. 의도한 검증이 아님 (18)
