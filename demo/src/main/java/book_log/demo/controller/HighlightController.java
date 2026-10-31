@@ -42,17 +42,23 @@ public class HighlightController {
 
     @PostMapping
     public ResponseEntity<Long> save(@Valid @RequestBody HighlightRequestDto requestDto) {
-        return ResponseEntity.ok(highlightService.saveHighlight(requestDto));
+        // 임시로 회원 ID를 1L로 설정 (인증 연동 시 교체, task 19)
+        Long memberId = 1L;
+        return ResponseEntity.ok(highlightService.saveHighlight(memberId, requestDto));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Long> update(@PathVariable Long id, @Valid @RequestBody HighlightRequestDto requestDto) {
-        return ResponseEntity.ok(highlightService.updateHighlight(id, requestDto));
+        // 임시로 회원 ID를 1L로 설정 (인증 연동 시 교체, task 19)
+        Long memberId = 1L;
+        return ResponseEntity.ok(highlightService.updateHighlight(memberId, id, requestDto));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        highlightService.deleteHighlight(id);
+        // 임시로 회원 ID를 1L로 설정 (인증 연동 시 교체, task 19)
+        Long memberId = 1L;
+        highlightService.deleteHighlight(memberId, id);
 
         return ResponseEntity.noContent().build();
     }

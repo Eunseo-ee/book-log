@@ -39,6 +39,20 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }
 
+    // 1-4. 다른 회원의 리소스 접근 (403)
+    @ExceptionHandler(ForbiddenResourceException.class)
+    public ResponseEntity<ErrorResponse> handleForbiddenResource(ForbiddenResourceException e) {
+        ErrorResponse response = new ErrorResponse(HttpStatus.FORBIDDEN.value(), e.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+    }
+
+    // 1-5. 없는 리소스 (404)
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException e) {
+        ErrorResponse response = new ErrorResponse(HttpStatus.NOT_FOUND.value(), e.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
     // 2. 잘못된 인자 예외 처리 (IllegalArgumentException - 평점 오류 등)
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException e) {

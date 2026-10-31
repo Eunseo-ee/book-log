@@ -13,6 +13,8 @@ import book_log.demo.domain.Content;
 import book_log.demo.domain.Highlight;
 import book_log.demo.dto.request.HighlightRequestDto;
 import book_log.demo.dto.response.HighlightResponseDto;
+import book_log.demo.exception.ForbiddenResourceException;
+import book_log.demo.exception.ResourceNotFoundException;
 import book_log.demo.repository.ContentRepository;
 import book_log.demo.repository.HighlightRepository;
 import book_log.demo.repository.HighlightSpecifications;
@@ -30,10 +32,13 @@ public class HighlightService {
     private final ContentRepository contentRepository;
 
     @Transactional
-    public Long saveHighlight(HighlightRequestDto requestDto) {
+    public Long saveHighlight(Long memberId, HighlightRequestDto requestDto) {
         
         // 1. 부모 콘텐츠 찾기 (없으면 에러)
         Content content = contentRepository.findById(requestDto.getContentId()).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 콘텐츠입니다. id=" + requestDto.getContentId()));
+
+        // 내 콘텐츠에만 하이라이트를 달 수 있다
+        validateOwner(content, memberId);
 
         // 2. 하이라이트 엔티티 생성
         Highlight highlight = Highlight.builder()
@@ -50,10 +55,10 @@ public class HighlightService {
 
     }
 
+    // 요청 body의 contentId는 쓰지 않는다: 수정으로 하이라이트가 다른 콘텐츠로 옮겨가지 않는다
     @Transactional
-    public Long updateHighlight(Long id, HighlightRequestDto requestDto) {
-        Highlight highlight = highlightRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("해당 하이라이트가 없습니다. id=" + id));
+    public Long updateHighlight(Long memberId, Long id, HighlightRequestDto requestDto) {
+        Highlight highlight = findOwnedHighlight(memberId, id);
 
         highlight.update(
                 requestDto.getText(),
@@ -67,9 +72,25 @@ public class HighlightService {
         return id;
     }
 
+    // deleteById는 없는 id를 조용히 무시하므로, 먼저 조회해 존재와 소유자를 확인한 뒤 지운다
     @Transactional
-    public void deleteHighlight(Long id) {
-        highlightRepository.deleteById(id);
+    public void deleteHighlight(Long memberId, Long id) {
+        Highlight highlight = findOwnedHighlight(memberId, id);
+        highlightRepository.delete(highlight);
+    }
+
+    private Highlight findOwnedHighlight(Long memberId, Long id) {
+        Highlight highlight = highlightRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("해당 하이라이트가 없습니다. id=" + id));
+        validateOwner(highlight.getContent(), memberId);
+        return highlight;
+    }
+
+    // member는 LAZY 프록시라 getId()만 부르면 회원 조회 쿼리가 나가지 않는다
+    private void validateOwner(Content content, Long memberId) {
+        if (!content.getMember().getId().equals(memberId)) {
+            throw new ForbiddenResourceException();
+        }
     }
 
     // 모음집 목록 조회: year(Content.viewDate 기준), category 모두 선택
