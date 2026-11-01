@@ -55,6 +55,10 @@ dependencies {
     // 테스트 관련 (이 부분을 아래처럼 정확히 수정해야 합니다)
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
+    // 실제 PostgreSQL 컨테이너로 리포지토리 쿼리 검증 (버전은 Spring Boot BOM이 관리)
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'org.testcontainers:junit-jupiter'
     
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }

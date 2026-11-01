@@ -1,11 +1,14 @@
 package book_log.demo.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -46,7 +49,7 @@ class StatisticsServiceTest {
         when(contentRepository.getAverageRating(1L, may, jun)).thenReturn(4.666);
         when(contentRepository.countByMonth(1L, may, jun)).thenReturn(5L);
         when(contentRepository.countByMonth(1L, apr, may)).thenReturn(10L);
-        when(contentRepository.findMostActiveDay(1L, may, jun)).thenReturn(new Object[]{5, 3L}); // 금요일
+        when(contentRepository.findMostActiveDay(1L, may, jun)).thenReturn(new Object[]{new Object[]{5, 3L}}); // 금요일 (실제 모양: 한 행짜리 중첩 배열)
 
         // when
         StatisticsResponse result = statisticsService.getMonthlyStatistics(1L, 2026, 5);
@@ -56,6 +59,26 @@ class StatisticsServiceTest {
         assertThat(result.getActivity().getGrowthRate()).isEqualTo(-50.0); // 성장률 확인
         assertThat(result.getTopCategory()).isEqualTo("MOVIE");
         assertThat(result.getTasteAnalysis()).contains("BOOK보다 MOVIE에 더 몰입");
+        assertThat(result.getMostActiveDay()).isEqualTo("금요일");
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0,일요일", "1,월요일", "2,화요일", "3,수요일", "4,목요일", "5,금요일", "6,토요일"})
+    @DisplayName("mostActiveDay - DOW 0(일)~6(토)가 요일 문자열로 매핑된다 (DOW가 BigDecimal 등 Number면 동작)")
+    void mostActiveDay_dowMapping(int dow, String expected) {
+        when(contentRepository.findMostActiveDay(1L, LocalDate.of(2026, 5, 1), LocalDate.of(2026, 6, 1)))
+                .thenReturn(new Object[]{new Object[]{new BigDecimal(dow), 2L}});
+
+        assertThat(statisticsService.getMonthlyStatistics(1L, 2026, 5).getMostActiveDay()).isEqualTo(expected);
+    }
+
+    @Test
+    @DisplayName("mostActiveDay - 기록 없는 달(빈 배열)은 기록 없음")
+    void mostActiveDay_empty() {
+        when(contentRepository.findMostActiveDay(1L, LocalDate.of(2026, 5, 1), LocalDate.of(2026, 6, 1)))
+                .thenReturn(new Object[0]);
+
+        assertThat(statisticsService.getMonthlyStatistics(1L, 2026, 5).getMostActiveDay()).isEqualTo("기록 없음");
     }
 
     @Test
