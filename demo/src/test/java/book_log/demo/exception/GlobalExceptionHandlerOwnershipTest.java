@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import book_log.demo.config.SecurityConfig;
 import book_log.demo.controller.HighlightController;
 import book_log.demo.security.JwtTokenProvider;
+import book_log.demo.security.TestAuth;
 import book_log.demo.service.HighlightService;
 
 // 웹 계층만 띄운다 (DB 연결 없음)
@@ -46,7 +47,8 @@ class GlobalExceptionHandlerOwnershipTest {
         when(highlightService.updateHighlight(anyLong(), anyLong(), any()))
                 .thenThrow(new ForbiddenResourceException());
 
-        mockMvc.perform(put("/api/highlights/10").contentType(MediaType.APPLICATION_JSON).content(BODY))
+        mockMvc.perform(put("/api/highlights/10").contentType(MediaType.APPLICATION_JSON).content(BODY)
+                .with(TestAuth.member(1L)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.status").value(403))
                 .andExpect(jsonPath("$.message").value(ForbiddenResourceException.MESSAGE));
@@ -58,7 +60,7 @@ class GlobalExceptionHandlerOwnershipTest {
         doThrow(new ResourceNotFoundException("해당 하이라이트가 없습니다. id=404"))
                 .when(highlightService).deleteHighlight(anyLong(), anyLong());
 
-        mockMvc.perform(delete("/api/highlights/404"))
+        mockMvc.perform(delete("/api/highlights/404").with(TestAuth.member(1L)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.message").value("해당 하이라이트가 없습니다. id=404"));
@@ -70,7 +72,8 @@ class GlobalExceptionHandlerOwnershipTest {
         when(highlightService.updateHighlight(anyLong(), anyLong(), any()))
                 .thenThrow(new IllegalArgumentException("잘못된 값"));
 
-        mockMvc.perform(put("/api/highlights/10").contentType(MediaType.APPLICATION_JSON).content(BODY))
+        mockMvc.perform(put("/api/highlights/10").contentType(MediaType.APPLICATION_JSON).content(BODY)
+                .with(TestAuth.member(1L)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400));
     }

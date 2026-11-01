@@ -4,10 +4,12 @@ import book_log.demo.domain.Category;
 import book_log.demo.domain.Content;
 import book_log.demo.dto.request.ContentRequestDto;
 import book_log.demo.dto.response.ContentResponseDto;
+import book_log.demo.security.AuthenticatedMember;
 import book_log.demo.service.ContentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -25,11 +27,10 @@ public class ContentController {
      * 외부 API에서 가져온 정보나 직접 입력한 정보를 DB에 저장
      */
     @PostMapping
-    public ResponseEntity<Long> saveContent(@Valid @RequestBody ContentRequestDto requestDto) {
+    public ResponseEntity<Long> saveContent(@Valid @RequestBody ContentRequestDto requestDto,
+            @AuthenticationPrincipal AuthenticatedMember member) {
         // @RequestBody : 클라이언트가 보낸 JSON 데이터를 Content 객체로 변환
-        // 임시로 회원 ID를 1L로 설정 (인증 연동 시 교체)
-        Long memberId = 1L;
-        Long savedId = contentService.saveContent(memberId, requestDto);
+        Long savedId = contentService.saveContent(member.id(), requestDto);
 
         // 생성 성공 시 201 Created 상태 코드와 저장된 리소스의 경로 반환
         return ResponseEntity.created(URI.create("/api/contents/" + savedId)).body(savedId);
@@ -42,24 +43,21 @@ public class ContentController {
     @GetMapping("/check")
     public ResponseEntity<Boolean> checkDuplicate (
             @RequestParam String externalId,
-            @RequestParam Category category) {
-
-            // 임시로 회원 ID를 1L로 설정 (인증 연동 시 교체)
-            Long memberId = 1L;
+            @RequestParam Category category,
+            @AuthenticationPrincipal AuthenticatedMember member) {
 
             // 이미 저장되어 있다면 true, 아니면 false 반환
-            boolean isSaved = contentService.isAlreadySaved(memberId, externalId, category);
+            boolean isSaved = contentService.isAlreadySaved(member.id(), externalId, category);
             return ResponseEntity.ok(isSaved);
         }
 
     @GetMapping("/filter")
     public ResponseEntity<List<ContentResponseDto>> getFilteredContents(
             @RequestParam(required = false) Integer year,
-            @RequestParam(required = false) Category category) {
+            @RequestParam(required = false) Category category,
+            @AuthenticationPrincipal AuthenticatedMember member) {
 
-                // 임시로 회원 ID를 1L로 설정 (인증 연동 시 교체, task 19)
-                Long memberId = 1L;
-                List<ContentResponseDto> response = contentService.getFilteredContents(memberId, year, category);
+                List<ContentResponseDto> response = contentService.getFilteredContents(member.id(), year, category);
 
                 return ResponseEntity.ok(response);
             }

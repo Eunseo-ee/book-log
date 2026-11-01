@@ -19,6 +19,10 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import book_log.demo.security.JsonAccessDeniedHandler;
+import book_log.demo.security.JsonAuthenticationEntryPoint;
 import book_log.demo.security.JwtAuthenticationFilter;
 import book_log.demo.security.JwtTokenProvider;
 
@@ -31,7 +35,8 @@ public class SecurityConfig {
     private String[] allowedOrigins;
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, JwtTokenProvider jwtTokenProvider) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, JwtTokenProvider jwtTokenProvider,
+            ObjectMapper objectMapper) throws Exception {
         http
             // 1. CSRF 보안 비활성화 (POST 요청을 허용하기 위해 필수)
             .csrf(AbstractHttpConfigurer::disable)
@@ -42,10 +47,19 @@ public class SecurityConfig {
             // 세션을 만들지 않는다 (인증 정보는 매 요청의 JWT로만 전달)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-            // 3. 모든 경로에 대해 인증 없이 접근 허용 (개발 단계용)
-            // TODO: task 19에서 authenticated 전환
+            // 3. 로그인/가입/재발급, Swagger, actuator health만 공개하고 나머지는 인증 필요
+            // CORS preflight(OPTIONS)는 위 cors()가 등록한 CorsFilter가 인가 검사보다 먼저 응답한다
             .authorizeHttpRequests(auth -> auth
-                .anyRequest().permitAll()
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+                .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                .anyRequest().authenticated()
+            )
+
+            // 401/403도 GlobalExceptionHandler와 같은 ErrorResponse JSON으로 통일한다
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint(new JsonAuthenticationEntryPoint(objectMapper))
+                .accessDeniedHandler(new JsonAccessDeniedHandler(objectMapper))
             )
 
             // JWT 필터는 빈이 아니라 여기서 new로 만든다 (빈이면 서블릿 필터로 한 번 더 자동 등록됨)

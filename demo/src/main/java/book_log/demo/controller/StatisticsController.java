@@ -4,12 +4,14 @@ import java.time.DateTimeException;
 import java.time.LocalDate;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import book_log.demo.dto.response.StatisticsResponse;
+import book_log.demo.security.AuthenticatedMember;
 import book_log.demo.service.StatisticsService;
 import lombok.RequiredArgsConstructor;
 
@@ -26,20 +28,19 @@ public class StatisticsController {
     @GetMapping
     public ResponseEntity<StatisticsResponse> getMonthlyStats(
             @RequestParam(name = "year", required = false) Integer year,
-            @RequestParam(name = "month", required = false) Integer month) {
-                
+            @RequestParam(name = "month", required = false) Integer month,
+            @AuthenticationPrincipal AuthenticatedMember member) {
+
+                // 값이 없으면 현재 날짜 기준 (null이 범위 검증에 닿기 전에 기본값부터 채운다)
+                int targetYear = (year != null) ? year : LocalDate.now().getYear();
+                int targetMonth = (month != null) ? month : LocalDate.now().getMonthValue();
+
                 // 간단한 파라미터 검증
-                if (month < 1 || month > 12) {
+                if (targetMonth < 1 || targetMonth > 12) {
                     throw new DateTimeException("월은 1-12 사이여야 합니다.");
                 }
 
-                // 값이 없으면 현재 날짜 기준
-                int targetYear = (year != null) ? year : LocalDate.now().getYear();
-                int targetMonth = (month != null) ? month : LocalDate.now().getMonthValue();
-                
-                // 임시로 회원 ID를 1L로 설정 (인증 연동 시 교체, task 19)
-                Long memberId = 1L;
-                StatisticsResponse response = statisticsService.getMonthlyStatistics(memberId, targetYear, targetMonth);
+                StatisticsResponse response = statisticsService.getMonthlyStatistics(member.id(), targetYear, targetMonth);
                 return ResponseEntity.ok(response);
             }
 

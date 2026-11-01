@@ -3,6 +3,7 @@ package book_log.demo.config;
 import book_log.demo.controller.HighlightController;
 import book_log.demo.controller.StatisticsController;
 import book_log.demo.security.JwtTokenProvider;
+import book_log.demo.security.TestAuth;
 import book_log.demo.service.HighlightService;
 import book_log.demo.service.StatisticsService;
 import org.junit.jupiter.api.DisplayName;
@@ -22,6 +23,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.containsStringIgnoringCase;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -85,7 +87,7 @@ class CorsConfigTest {
     void allowedActualRequest() throws Exception {
         when(highlightService.getHighlights(any(), any(), any())).thenReturn(List.of());
 
-        mockMvc.perform(get("/api/highlights").header(HttpHeaders.ORIGIN, ALLOWED))
+        mockMvc.perform(get("/api/highlights").header(HttpHeaders.ORIGIN, ALLOWED).with(TestAuth.member(1L)))
                 .andExpect(status().isOk())
                 .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, ALLOWED));
     }
@@ -96,6 +98,25 @@ class CorsConfigTest {
         mockMvc.perform(get("/api/highlights").header(HttpHeaders.ORIGIN, NOT_ALLOWED))
                 .andExpect(status().isForbidden())
                 .andExpect(header().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN));
+    }
+
+    @Test
+    @DisplayName("preflight는 인증 정보(Authorization) 없이도 통과하고, Authorization 헤더를 허용한다")
+    void preflightPassesWithoutAuthentication() throws Exception {
+        mockMvc.perform(options("/api/highlights")
+                .header(HttpHeaders.ORIGIN, ALLOWED)
+                .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "GET")
+                .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "authorization,content-type"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, containsStringIgnoringCase("authorization")));
+    }
+
+    @Test
+    @DisplayName("인증이 없어 401이 나는 응답에도 허용 origin이면 CORS 헤더가 붙는다 (브라우저가 401 본문을 읽을 수 있다)")
+    void unauthorizedResponseKeepsCorsHeader() throws Exception {
+        mockMvc.perform(get("/api/highlights").header(HttpHeaders.ORIGIN, ALLOWED))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, ALLOWED));
     }
 
     @Test

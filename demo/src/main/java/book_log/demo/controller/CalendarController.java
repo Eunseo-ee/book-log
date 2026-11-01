@@ -1,6 +1,7 @@
 package book_log.demo.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -8,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import book_log.demo.dto.response.CalendarResponse;
+import book_log.demo.security.AuthenticatedMember;
 import book_log.demo.service.CalendarService;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -28,13 +30,10 @@ public class CalendarController {
     @GetMapping("/activities")
     public ResponseEntity<CalendarResponse> getMonthlyActivity(
         @RequestParam(name = "year") @Min(2000) @Max(2100) int year,
-        @RequestParam(name = "month") @Min(1) @Max(12) int month
-        // 실제 서비스 시에는 @AuthenticationPrincipal 등을 통해 로그인한 유저 ID 가져오기
+        @RequestParam(name = "month") @Min(1) @Max(12) int month,
+        @AuthenticationPrincipal AuthenticatedMember member
     ) {
-        // 임시로 회원 ID를 1L로 설정 (로그인 구현 방식 따라 변경 필요)
-        Long memberId = 1L;
-
-        CalendarResponse response = calendarService.getMonthlyActivity(memberId, year, month);
+        CalendarResponse response = calendarService.getMonthlyActivity(member.id(), year, month);
 
         return ResponseEntity.ok(response);
     }

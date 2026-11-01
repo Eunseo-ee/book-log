@@ -3,11 +3,13 @@ package book_log.demo.security;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsStringIgnoringCase;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.Date;
@@ -77,16 +79,16 @@ class JwtSecurityChainTest {
     }
 
     @Test
-    @DisplayName("refresh 토큰으로는 인증되지 않는다 (익명으로 통과)")
+    @DisplayName("refresh 토큰으로는 인증되지 않는다 (보호 경로이므로 401)")
     void refreshTokenIsAnonymous() throws Exception {
         mockMvc.perform(get("/api/probe/me").header(HttpHeaders.AUTHORIZATION, "Bearer " + provider.createRefreshToken(member)))
-                .andExpect(status().isOk())
-                .andExpect(content().string("anonymous"));
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401));
     }
 
     @Test
-    @DisplayName("위조/만료/깨진 토큰이 담긴 요청도 permitAll 경로에서는 401/500 없이 정상 처리된다")
-    void badTokensDoNotBreakPermitAllPaths() throws Exception {
+    @DisplayName("위조/만료/깨진 토큰은 500이 아니라 ErrorResponse 형식의 401이 되고, 서비스는 호출되지 않는다")
+    void badTokensAreUnauthorized() throws Exception {
         when(highlightService.getHighlights(any(), any(), any())).thenReturn(List.of());
         JwtTokenProvider expiring = new JwtTokenProvider(
                 TestJwt.properties(TestJwt.FAKE_SECRET, -1_000L, TestJwt.REFRESH_MS));
@@ -99,11 +101,12 @@ class JwtSecurityChainTest {
                 "Bearer " + otherSecret.createAccessToken(member), "Bearer " + unsigned, "Bearer ", "Basic abc" };
         for (String header : headers) {
             mockMvc.perform(get("/api/highlights").header(HttpHeaders.AUTHORIZATION, header))
-                    .andExpect(status().isOk());
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(jsonPath("$.status").value(401));
             mockMvc.perform(get("/api/probe/me").header(HttpHeaders.AUTHORIZATION, header))
-                    .andExpect(status().isOk())
-                    .andExpect(content().string("anonymous"));
+                    .andExpect(status().isUnauthorized());
         }
+        verifyNoInteractions(highlightService);
     }
 
     @Test
