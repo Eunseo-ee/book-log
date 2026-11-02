@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BookOpen, Calendar, Home, Highlighter } from 'lucide-react'
+import { BookOpen, Calendar, Home, Highlighter, LogOut } from 'lucide-react'
+import { useAuth } from '@/components/auth/AuthProvider'
 import MiniCalendar from './MiniCalendar'
 
 const NAV = [
@@ -13,6 +14,7 @@ const NAV = [
 
 export default function Sidebar() {
   const pathname = usePathname()
+  const { username, logout } = useAuth()
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-56 flex flex-col bg-white dark:bg-neutral-950 border-r border-neutral-200 dark:border-neutral-800 z-30">
@@ -49,6 +51,19 @@ export default function Sidebar() {
 
       {/* 미니 캘린더 — 경량 boolean 쿼리 사용 */}
       <MiniCalendar />
+
+      {/* 로그인 사용자 / 로그아웃 */}
+      <div className="mt-auto flex items-center justify-between gap-2 px-4 py-3 border-t border-neutral-100 dark:border-neutral-800">
+        <span className="truncate text-[13px] text-neutral-600 dark:text-neutral-300">{username ?? ''}</span>
+        <button
+          type="button"
+          onClick={logout}
+          className="flex items-center gap-1 text-[12px] text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors"
+        >
+          <LogOut size={13} />
+          로그아웃
+        </button>
+      </div>
     </aside>
   )
 }

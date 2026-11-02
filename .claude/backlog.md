@@ -47,3 +47,4 @@
 - [ ] ROLE_ADMIN이 정의돼 있지만 역할로 막는 경로가 없어 시큐리티 403은 실제로 발생하지 않음. 역할 도입 시 JsonAccessDeniedHandler를 체인 테스트로 검증할 것 (19)
 - [ ] application.yml에 management.endpoints.web.exposure.include: health를 명시하면 기본값에 기대지 않고 노출 범위를 고정할 수 있음 (gitignore 대상이라 직접 수정 필요) (19)
 - [ ] 회원이 삭제된 뒤 만료 전 access 토큰으로 콘텐츠를 저장하면 FK 위반 500이 됨. 응답 정책(401 등) 결정 필요 (16, 19)
+- [ ] [향후 개선안] refresh 토큰을 httpOnly+Secure+SameSite 쿠키로 전환(XSS로 refresh 탈취 방지). 백엔드 수정 필요: login/refresh가 Set-Cookie로 발급·읽기, CORS allowCredentials + origin 명시, CSRF 대응(SameSite 또는 토큰), 로그아웃 엔드포인트(쿠키 삭제). 서버 저장/회전/폐기(task 14 backlog)와 함께 설계 권장 (21)

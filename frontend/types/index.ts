@@ -115,3 +115,30 @@ export interface HighlightRequestDto {
   episode?: number
   timestamp?: string    // "01:23:45"
 }
+
+// RegisterRequestDto.java
+export interface RegisterRequestDto {
+  username: string      // 4~20자
+  password: string      // 8~64자, UTF-8 72바이트 이하
+  email: string
+}
+
+// LoginRequestDto.java
+export interface LoginRequestDto {
+  username: string
+  password: string
+}
+
+// MemberResponseDto.java
+export interface MemberResponseDto {
+  id: number
+  username: string
+}
+
+// LoginResponseDto.java
+export interface LoginResponseDto {
+  id: number
+  username: string
+  accessToken: string
+  refreshToken: string
+}
