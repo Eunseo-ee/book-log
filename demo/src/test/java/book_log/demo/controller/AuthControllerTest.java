@@ -22,6 +22,7 @@ import book_log.demo.config.SecurityConfig;
 import book_log.demo.dto.response.LoginResponseDto;
 import book_log.demo.dto.response.MemberResponseDto;
 import book_log.demo.security.JwtTokenProvider;
+import book_log.demo.exception.DuplicateEmailException;
 import book_log.demo.exception.DuplicateUsernameException;
 import book_log.demo.exception.InvalidCredentialsException;
 import book_log.demo.service.AuthService;
@@ -96,6 +97,17 @@ class AuthControllerTest {
                         .content(registerJson("alice", PASSWORD, "not-an-email")))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.email").exists());
+    }
+
+    @Test
+    @DisplayName("이메일 중복은 409")
+    void duplicateEmailIs409() throws Exception {
+        when(authService.register(any())).thenThrow(new DuplicateEmailException());
+
+        mockMvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
+                        .content(registerJson("bobby", PASSWORD, "alice@example.com")))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("이미 사용 중인 이메일입니다."));
     }
 
     @Test

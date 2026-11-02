@@ -23,6 +23,7 @@ import book_log.demo.domain.Role;
 import book_log.demo.dto.request.LoginRequestDto;
 import book_log.demo.dto.request.RegisterRequestDto;
 import book_log.demo.dto.response.MemberResponseDto;
+import book_log.demo.exception.DuplicateEmailException;
 import book_log.demo.exception.DuplicateUsernameException;
 import book_log.demo.exception.InvalidCredentialsException;
 import book_log.demo.repository.MemberRepository;
@@ -93,6 +94,84 @@ class AuthServiceTest {
 
         assertThatThrownBy(() -> authService.register(
                 new RegisterRequestDto("alice", RAW_PASSWORD, "alice@example.com")))
+                .isInstanceOf(DuplicateUsernameException.class);
+    }
+
+    @Test
+    @DisplayName("이미 가입된 이메일은 저장하지 않고 거부한다")
+    void registerRejectsDuplicateEmail() {
+        when(memberRepository.existsByUsername("bob")).thenReturn(false);
+        when(memberRepository.existsByEmail("alice@example.com")).thenReturn(true);
+
+        assertThatThrownBy(() -> authService.register(
+                new RegisterRequestDto("bob", RAW_PASSWORD, "alice@example.com")))
+                .isInstanceOf(DuplicateEmailException.class)
+                .hasMessage("이미 사용 중인 이메일입니다.");
+
+        verify(memberRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    @DisplayName("대소문자만 다른 이메일도 정규화해서 중복으로 거부한다")
+    void registerRejectsEmailDifferingOnlyByCase() {
+        when(memberRepository.existsByEmail("alice@example.com")).thenReturn(true);
+
+        assertThatThrownBy(() -> authService.register(
+                new RegisterRequestDto("bob", RAW_PASSWORD, "Alice@Example.COM")))
+                .isInstanceOf(DuplicateEmailException.class);
+
+        verify(memberRepository).existsByEmail("alice@example.com");
+        verify(memberRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    @DisplayName("앞뒤 공백이 포함된 이메일도 정규화해서 중복으로 거부한다")
+    void registerRejectsEmailWithSurroundingWhitespace() {
+        when(memberRepository.existsByEmail("alice@example.com")).thenReturn(true);
+
+        assertThatThrownBy(() -> authService.register(
+                new RegisterRequestDto("bob", RAW_PASSWORD, "  alice@example.com \t")))
+                .isInstanceOf(DuplicateEmailException.class);
+
+        verify(memberRepository).existsByEmail("alice@example.com");
+        verify(memberRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    @DisplayName("이메일은 trim + 소문자로 정규화되어 저장된다")
+    void registerStoresNormalizedEmail() {
+        when(memberRepository.saveAndFlush(any(Member.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        authService.register(new RegisterRequestDto("bob", RAW_PASSWORD, "  Bob@Example.COM "));
+
+        ArgumentCaptor<Member> captor = ArgumentCaptor.forClass(Member.class);
+        verify(memberRepository).saveAndFlush(captor.capture());
+        assertThat(captor.getValue().getEmail()).isEqualTo("bob@example.com");
+    }
+
+    @Test
+    @DisplayName("동시 가입으로 이메일 unique 제약에 걸리면 이메일 중복 예외로 변환한다")
+    void registerConvertsEmailConstraintViolation() {
+        when(memberRepository.saveAndFlush(any(Member.class))).thenThrow(
+                new DataIntegrityViolationException("unique", new org.hibernate.exception.ConstraintViolationException(
+                        "unique", new java.sql.SQLException("duplicate", "23505"), Member.EMAIL_UNIQUE_CONSTRAINT)));
+
+        assertThatThrownBy(() -> authService.register(
+                new RegisterRequestDto("bob", RAW_PASSWORD, "bob@example.com")))
+                .isInstanceOf(DuplicateEmailException.class);
+    }
+
+    @Test
+    @DisplayName("아이디 값에 email이 들어 있어도 이메일 제약 이름이 아니면 아이디 중복으로 본다")
+    void registerKeepsUsernameConflictForOtherConstraint() {
+        when(memberRepository.saveAndFlush(any(Member.class))).thenThrow(
+                new DataIntegrityViolationException("Key (username)=(email) already exists",
+                        new org.hibernate.exception.ConstraintViolationException(
+                                "Key (username)=(email) already exists", new java.sql.SQLException("duplicate", "23505"),
+                                "uk_some_username")));
+
+        assertThatThrownBy(() -> authService.register(
+                new RegisterRequestDto("email", RAW_PASSWORD, "bob@example.com")))
                 .isInstanceOf(DuplicateUsernameException.class);
     }
 

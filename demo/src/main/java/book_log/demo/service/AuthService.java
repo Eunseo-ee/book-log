@@ -1,5 +1,8 @@
 package book_log.demo.service;
 
+import java.util.Locale;
+
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -15,6 +18,7 @@ import book_log.demo.security.TokenType;
 import book_log.demo.dto.request.LoginRequestDto;
 import book_log.demo.dto.request.RegisterRequestDto;
 import book_log.demo.dto.response.MemberResponseDto;
+import book_log.demo.exception.DuplicateEmailException;
 import book_log.demo.exception.DuplicateUsernameException;
 import book_log.demo.exception.InvalidCredentialsException;
 import book_log.demo.repository.MemberRepository;
@@ -38,22 +42,48 @@ public class AuthService {
 
     @Transactional
     public MemberResponseDto register(RegisterRequestDto request) {
+        // 대소문자·앞뒤 공백만 다른 이메일로 중복 검사를 우회하지 못하게 저장·비교 전에 정규화한다
+        String email = normalizeEmail(request.getEmail());
+
         if (memberRepository.existsByUsername(request.getUsername())) {
             throw new DuplicateUsernameException();
+        }
+        // 친절한 에러 메시지용 검사. 동시 가입은 이 검사를 둘 다 통과하므로 최종 방어선은 DB unique 제약이다
+        if (memberRepository.existsByEmail(email)) {
+            throw new DuplicateEmailException();
         }
 
         Member member = Member.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .email(request.getEmail())
+                .email(email)
                 .build();
 
         try {
             // 동시 가입으로 exists 검사를 통과해도 unique 제약에서 걸리도록 즉시 flush
             return MemberResponseDto.from(memberRepository.saveAndFlush(member));
         } catch (DataIntegrityViolationException e) {
+            // 이메일 제약 위반만 이메일 중복으로, 그 외(아이디 unique 등)는 기존대로 아이디 중복으로 본다
+            if (isEmailUniqueViolation(e)) {
+                throw new DuplicateEmailException();
+            }
             throw new DuplicateUsernameException();
         }
+    }
+
+    private static String normalizeEmail(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
+    }
+
+    // 제약 이름으로 구분한다. 메시지 문자열에서 "email"을 찾으면 아이디 값에 email이 들어간 경우를 잘못 판정한다
+    private static boolean isEmailUniqueViolation(Throwable e) {
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            if (t instanceof ConstraintViolationException cve && cve.getConstraintName() != null
+                    && cve.getConstraintName().toLowerCase(Locale.ROOT).contains(Member.EMAIL_UNIQUE_CONSTRAINT)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Transactional(readOnly = true)
