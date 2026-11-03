@@ -47,8 +47,39 @@ jobs:
           API_KAKAOKEY: ${{ secrets.KAKAO_KEY }}
           API_TMDBTOKEN: ${{ secrets.TMDB_TOKEN }}
 
+      # 테스트 합계와 Testcontainers 테스트 결과를 Job Summary에 표시 (외부 액션 없이 runner의 python3 사용)
+      - name: Test summary
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import glob, os
+          import xml.etree.ElementTree as ET
+          files = sorted(glob.glob('build/test-results/test/*.xml'))
+          total = skipped = failures = errors = 0
+          suites = {}
+          for f in files:
+              r = ET.parse(f).getroot()
+              n, s, fl, er = (int(r.get(k)) for k in ('tests', 'skipped', 'failures', 'errors'))
+              total += n; skipped += s; failures += fl; errors += er
+              suites[r.get('name')] = (n, s, fl, er)
+          target = 'book_log.demo.repository.ContentRepositoryPostgresTest'
+          lines = ['## Test summary', '',
+                   f'- 테스트 클래스(XML) {len(files)}개',
+                   f'- 총 {total}개 실행 대상, skipped {skipped}, failures {failures}, errors {errors}']
+          if target in suites:
+              n, s, fl, er = suites[target]
+              lines.append(f'- ContentRepositoryPostgresTest: tests={n}, skipped={s}, failures={fl}, errors={er}'
+                           + (' (Docker 없이 건너뜀)' if s == n and n > 0 else ''))
+          else:
+              lines.append('- ContentRepositoryPostgresTest: 결과 XML 없음')
+          out = chr(10).join(lines)
+          print(out)
+          with open(os.environ.get('GITHUB_STEP_SUMMARY', os.devnull), 'a', encoding='utf-8') as fh:
+              fh.write(out + chr(10))
+          PY
+
       - name: Upload test reports
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-reports
