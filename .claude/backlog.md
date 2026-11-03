@@ -1,50 +1,55 @@
-- [ ] currentPage가 항상 0으로 내려옴 (검색 응답)
-- [ ] isSaved가 userId를 반영하지 않음 → JWT 병합 시 확인
-- [ ] 배지 라벨 표기 통일 ("도서" vs "책", "TV 프로그램" vs "드라마")
-- [ ] TMDB credits API로 실제 감독 연동
-- [ ] test 폴더 DemoApplication.java가 main 클래스를 가림
-- [ ] HighlightServiceTest 길이 초과 테스트가 엉뚱한 예외로 통과
-- [ ] GET /api/highlights 모음집 API (프론트 /highlights가 이미 호출 중)
-- [ ] WANT_to_WATCH 저장 시 viewDate 필수/미래 불가 제약과 충돌. 날짜 없는 기록을 캘린더·통계가 어떻게 다룰지 결정 필요
-- [ ] 평점이 하나도 없는 달의 averageRating을 0.0 대신 null로 (StatisticsService, StatisticsServiceTest 같이 수정, 프론트는 null이면 '—')
-- [ ] Content.updateRating에 범위 검증 없음 (수정 API 만들 때)
-- [ ] 평점 0.5 단위를 서버가 강제하지 않음
-- [ ] 평점 범위 오류 응답 형식이 컨트롤러(@Valid)와 서비스에서 다름
-- [ ] frontend/types/index.ts authorOrDirector 타입을 string | null 로 (컴포넌트는 이미 null 처리 중)
-- [ ] UnifiedSearchResponse.java authorOrDirector 주석이 예전 동작("상세페이지 참조")을 설명함
-- [ ] 캐시 키에 매핑 버전 구분이 없어 매핑 로직 변경 시 최대 10분간 옛 응답이 나감 (TTL 의존)
-- [ ] 캘린더 요청 실패 시 에러 표시 없이 빈 캘린더가 됨 (useCalendar.ts) → 실패와 기록 없음이 구분 안 됨
-- [ ] 메인 캘린더 날짜 클릭 미구현 (onClick/상세 화면/날짜 조회 API 없음) → 저장한 기록을 어디서 보는지 모르겠다는 인박스 항목과 연결
-- [ ] 하이라이트 API도 프록시 없이 직접 호출해서 같은 CORS 실패 예상, GET /api/highlights 자체가 백엔드에 없음
-- [ ] StatisticsController: month 없이 호출하면 NPE (null 체크 전에 비교)
-- [ ] ContentService.getFilteredContents: category=ANIME면 ANIME만 조회해서 TMDB 애니(ANIME_MOVIE/ANIME_TVA)가 빠짐. YEAR() 비교도 범위 비교 원칙과 다름
-- [ ] HighlightRepositoryTest(Replace.NONE)와 DemoApplicationTests가 application.yml을 읽어 실제 Supabase에 붙음
-- [ ] 프론트 HighlightWithContent(content 중첩 + thumbnailUrl)와 HighlightResponseDto(평평한 contentId/Title/Category) 형태 불일치
-- [ ] 프론트 호출 방식이 프록시(검색/캘린더/콘텐츠 저장)와 8080 직접(통계/contents filter·check/하이라이트)으로 두 갈래. 전역 CORS가 생겼으니 한쪽으로 통일할지 결정 필요. lib/api.ts:14-15 주석("@CrossOrigin은 StatisticsController에만 있음")도 이제 사실과 다름
-- [ ] 직접 호출은 origin이 정확히 http://localhost:3000일 때만 통과. 3000 포트가 사용 중이라 next dev가 3001로 뜨거나 127.0.0.1:3000으로 접속하면 403 (app.cors.allowed-origins에 추가하거나 프록시로 통일)
-- [ ] JWT 병합 시 쿠키 인증이면 CORS allowCredentials(true) 필요. 지금은 false (Authorization 헤더 방식이면 allowedHeaders "*"로 충분)
-- [ ] 하이라이트 "영화/드라마" 탭이 MOVIE만 보내서 TV 하이라이트가 빠짐 (백엔드 resolveCategories에서 MOVIE+TV 묶기 또는 탭 분리, 09)
-- [ ] 하이라이트 저장 후 현재 탭/연도 필터에 안 걸리면 목록 변화가 없어 성공 여부를 모름 (토스트 없음, 09)
-- [ ] 프론트 ContentResponseDto.author 타입이 string인데 TMDB 작품은 null로 옴 (09)
-- [ ] 프론트에 lint 스크립트/ESLint/테스트 도구 없음 → 도입 여부 결정 필요 (09)
-- [ ] GET /api/contents/filter 조건 없으면 findAll로 모든 사용자 콘텐츠 반환 → JWT 병합 시 userId 조건 필요 (09 작품 선택 목록이 사용 중)
-- [ ] PUT /api/highlights/{id}가 저장용 DTO를 공유해 contentId @NotNull인데 서비스는 안 씀 → 다른 id를 보내도 200, 작품은 안 바뀜. 수정 전용 DTO 분리 또는 작품 변경 지원 결정 (10)
-- [ ] 하이라이트 카드 수정/삭제 버튼이 hover에서만 보여 터치 기기에서 못 누름 (10)
-- [ ] AddHighlightModal이 추가·수정을 겸하게 됨 → 이름 변경(HighlightFormModal 등) 검토 (10)
-- [ ] 비밀번호 상한 64자(문자 수)와 BCrypt 72바이트 제한 불일치: 한글 등 멀티바이트 비밀번호는 64자 이내여도 72바이트를 넘어 뒤쪽이 잘린 채 해시될 수 있음 (13)
-- [ ] 로그인 시도 횟수 제한(brute force 방어) 없음, 이메일 중복 허용, 아이디 대소문자 구분 정책 미정 (13)
-- [ ] DemoApplicationTests가 실제 PostgreSQL에 붙어 members 테이블을 생성함. 테스트 DB 분리 필요 (13, 기존 항목과 연결)
-- [ ] refresh 토큰을 서버에 저장하지 않아 로그아웃/폐기/탈취 대응이 불가능, refresh 회전도 없음. DB 또는 Redis에 refresh(또는 jti)를 저장하는 방식 검토 (14)
-- [ ] GlobalExceptionHandler의 catch-all(Exception)이 없는 경로 404(NoResourceFoundException)를 500으로 바꾼다. 본문이 비었거나 JSON이 깨진 요청(HttpMessageNotReadableException)도 같은 경로로 갈 가능성 있음(미확인) (14)
-- [ ] 위조/만료 토큰 요청마다 WARN 로그가 남아 인증 없는 사용자가 로그를 부풀릴 수 있음. 로그 레벨/샘플링 검토 (14)
-- [ ] /api/auth/refresh에도 호출 횟수 제한 없음 (로그인 제한 항목과 함께) (14)
-- [ ] 하이라이트 update/delete 소유자 확인이 highlight 조회 후 content(LAZY)를 한 번 더 조회한다(쿼리 2회). 필요하면 findById에 @EntityGraph(content) 또는 memberId 조건 쿼리로 줄이기 (18)
+## 열림 - 배포 전 (task 25 관련)
+- [ ] GlobalExceptionHandler의 catch-all(Exception)이 없는 경로 404(NoResourceFoundException)를 500으로 바꾼다. 본문이 비었거나 JSON이 깨진 요청(HttpMessageNotReadableException)도 같은 경로로 갈 가능성 있음(미확인) (14) ← 24-2 B6(`?category=잘못된값`의 MethodArgumentTypeMismatchException, printStackTrace 포함). **25-e 또는 25-f 후보** (24-2 task 25 후보 a~g에서 빠져 있었음). 코드(GlobalExceptionHandler.java:94-102)상 여전히 유효, 실행해 재현하지는 않음
+- [ ] application.yml에 management.endpoints.web.exposure.include: health를 명시하면 기본값에 기대지 않고 노출 범위를 고정할 수 있음 (gitignore 대상이라 직접 수정 필요) (19) ← 25-e (24-2 B8)
+- [ ] 프론트 호출 방식이 프록시(검색/캘린더/콘텐츠 저장)와 8080 직접(통계/contents filter·check/하이라이트)으로 두 갈래. 전역 CORS가 생겼으니 한쪽으로 통일할지 결정 필요. lib/api.ts:14-15 주석("@CrossOrigin은 StatisticsController에만 있음")도 이제 사실과 다름 ← 25-d (24-2 A5). 확인: api.ts에서 통계/filter/check/하이라이트는 BASE_URL, 나머지는 PROXY_BASE_URL
+- [ ] 직접 호출은 origin이 정확히 http://localhost:3000일 때만 통과. 3000 포트가 사용 중이라 next dev가 3001로 뜨거나 127.0.0.1:3000으로 접속하면 403 (app.cors.allowed-origins에 추가하거나 프록시로 통일) ← 25-d. 배포 주소는 APP_CORS_ALLOWED_ORIGINS로 넣어야 함(SecurityConfig 기본값은 localhost:3000뿐)
+- [ ] 로그인 시도 횟수 제한(brute force 방어) 없음, 이메일 중복 허용, 아이디 대소문자 구분 정책 미정 (13) ← 이메일 중복은 task 21-1에서 해결(decisions 2026-11-02). 남은 것: 횟수 제한(24-2 B2, 25 앞/뒤는 공개 범위에 따라 사용자 결정), 아이디 대소문자 정책(나중)
+- [ ] /api/auth/refresh에도 호출 횟수 제한 없음 (로그인 제한 항목과 함께) (14) ← 24-2 B2, 위 항목과 같이 결정
+
+## 열림 - 나중에
+- [ ] currentPage가 항상 0으로 내려옴 (검색 응답) — 확인: Kakao/Tmdb 서비스 어디서도 currentPage를 채우지 않고 SearchService는 그대로 복사만 함
+- [ ] TMDB credits API로 실제 감독 연동 — 확인: TmdbSearchService.java:114-119 authorOrDirector(null)
+- [ ] test 폴더 DemoApplication.java가 main 클래스를 가림 — 확인: 파일 아직 존재 (24-2 C, 영향은 미실행)
+- [ ] HighlightServiceTest 길이 초과 테스트가 엉뚱한 예외로 통과 — 확인: saveHighlight_Fail_TooLongText 그대로(아래 같은 내용 항목과 중복)
+- [ ] WANT_to_WATCH 저장 시 viewDate 필수/미래 불가 제약과 충돌. 날짜 없는 기록을 캘린더·통계가 어떻게 다룰지 결정 필요 — 확인: ContentRequestDto.viewDate @NotNull, ContentService 미래 날짜 거절 그대로
+- [ ] 평점이 하나도 없는 달의 averageRating을 0.0 대신 null로 (StatisticsService, StatisticsServiceTest 같이 수정, 프론트는 null이면 '—') — 확인: StatisticsService.java:49 여전히 0.0 (프론트 타입은 이미 number | null)
+- [ ] Content.updateRating에 범위 검증 없음 (수정 API 만들 때) — 확인: Content.java:54, 호출처 없음
+- [ ] 평점 0.5 단위를 서버가 강제하지 않음 — 확인: @Min(0) @Max(5)와 서비스 범위 검증뿐
+- [ ] 평점 범위 오류 응답 형식이 컨트롤러(@Valid)와 서비스에서 다름 — 확인: @Valid는 필드 맵, 서비스는 ErrorResponse (프론트 toErrorMessages가 둘 다 처리)
+- [ ] frontend/types/index.ts authorOrDirector 타입을 string | null 로 (컴포넌트는 이미 null 처리 중) — 확인: types/index.ts UnifiedSearchResponse.authorOrDirector: string
+- [ ] UnifiedSearchResponse.java authorOrDirector 주석이 예전 동작("상세페이지 참조")을 설명함 — 확인: UnifiedSearchResponse.java:15
+- [ ] 캐시 키에 매핑 버전 구분이 없어 매핑 로직 변경 시 최대 10분간 옛 응답이 나감 (TTL 의존) — 확인: TmdbSearchService @Cacheable key = query:category:page (배포 시 Redis에 옛 값이 남을 수 있음에 유의)
+- [ ] 캘린더 요청 실패 시 에러 표시 없이 빈 캘린더가 됨 (useCalendar.ts) → 실패와 기록 없음이 구분 안 됨 — 확인: useCalendar.ts catch에서 setData(null)
+- [ ] 메인 캘린더 날짜 클릭 미구현 (onClick/상세 화면/날짜 조회 API 없음) → 저장한 기록을 어디서 보는지 모르겠다는 인박스 항목과 연결 — 확인: CalendarView.tsx의 onClick은 월 이동 버튼뿐
+- [ ] ContentService.getFilteredContents: category=ANIME면 ANIME만 조회해서 TMDB 애니(ANIME_MOVIE/ANIME_TVA)가 빠짐. YEAR() 비교도 범위 비교 원칙과 다름 — 확인: ANIME 부분은 ContentService.java:109 findByMemberIdAndCategory 그대로 열림. YEAR() 부분은 task 17에서 범위 비교로 해결됨
+- [ ] 하이라이트 저장 후 현재 탭/연도 필터에 안 걸리면 목록 변화가 없어 성공 여부를 모름 (토스트 없음, 09) — 확인: components/highlights에 토스트/알림 코드 없음
+- [ ] 프론트 ContentResponseDto.author 타입이 string인데 TMDB 작품은 null로 옴 (09) — 확인: types/index.ts ContentResponseDto.author: string
+- [ ] 프론트에 lint 스크립트/ESLint/테스트 도구 없음 → 도입 여부 결정 필요 (09) — 확인: package.json scripts는 dev/build/start뿐
+- [ ] PUT /api/highlights/{id}가 저장용 DTO를 공유해 contentId @NotNull인데 서비스는 안 씀 → 다른 id를 보내도 200, 작품은 안 바뀜. 수정 전용 DTO 분리 또는 작품 변경 지원 결정 (10) — 확인: HighlightController.update가 HighlightRequestDto 사용
+- [ ] 하이라이트 카드 수정/삭제 버튼이 hover에서만 보여 터치 기기에서 못 누름 (10) — 확인: HighlightCard.tsx:52 opacity-0 group-hover:opacity-100
+- [ ] AddHighlightModal이 추가·수정을 겸하게 됨 → 이름 변경(HighlightFormModal 등) 검토 (10) — 확인: components/highlights/AddHighlightModal.tsx 그대로
+- [ ] JWT 병합 시 쿠키 인증이면 CORS allowCredentials(true) 필요. 지금은 false (Authorization 헤더 방식이면 allowedHeaders "*"로 충분) — 인증은 Authorization 헤더 방식으로 확정(task 21)이라 쿠키 전환(맨 아래 향후 개선안) 때만 필요
+- [ ] refresh 토큰을 서버에 저장하지 않아 로그아웃/폐기/탈취 대응이 불가능, refresh 회전도 없음. DB 또는 Redis에 refresh(또는 jti)를 저장하는 방식 검토 (14) — 확인: decisions 30, 50 (24-2 C)
+- [ ] 위조/만료 토큰 요청마다 WARN 로그가 남아 인증 없는 사용자가 로그를 부풀릴 수 있음. 로그 레벨/샘플링 검토 (14) — 24-2 C (토큰 값은 로그에 안 남음 확인됨)
+- [ ] 하이라이트 update/delete 소유자 확인이 highlight 조회 후 content(LAZY)를 한 번 더 조회한다(쿼리 2회). 필요하면 findById에 @EntityGraph(content) 또는 memberId 조건 쿼리로 줄이기 (18) — 확인: HighlightService.findOwnedHighlight 그대로
 - [ ] 403/404 구분은 id 열거를 허용한다. 하이라이트 id가 순차 Long이라 외부에 노출 가능. 둘 다 404로 통일할지 인증 task 이후 재검토 (18)
-- [ ] HighlightServiceTest.saveHighlight_Fail_TooLongText는 서비스에 길이 검증이 없고 mock이 빈 Optional을 줘서 IllegalArgumentException(없는 콘텐츠)이 나와 통과한다. 의도한 검증이 아님 (18)
-- [ ] 프론트가 모든 /api/** 요청에 Authorization: Bearer 헤더를 붙이는지, Next 프록시가 헤더를 전달하는지 확인 필요. task 19 이후 토큰이 없으면 전부 401 (19)
-- [ ] GlobalExceptionHandler catch-all(Exception)이 컨트롤러/서비스 안에서 던져진 AccessDeniedException도 500으로 만들 수 있음. 지금은 @EnableMethodSecurity가 없어 재현 경로 없음. 메서드 보안 도입 전에 403 처리 필요 (19)
-- [ ] 허용되지 않은 origin의 CORS 거절(403)은 CorsFilter 기본 응답이라 ErrorResponse 형식이 아님 (19)
+- [ ] HighlightServiceTest.saveHighlight_Fail_TooLongText는 서비스에 길이 검증이 없고 mock이 빈 Optional을 줘서 IllegalArgumentException(없는 콘텐츠)이 나와 통과한다. 의도한 검증이 아님 (18) — 확인: 테스트 코드 그대로
+- [ ] GlobalExceptionHandler catch-all(Exception)이 컨트롤러/서비스 안에서 던져진 AccessDeniedException도 500으로 만들 수 있음. 지금은 @EnableMethodSecurity가 없어 재현 경로 없음. 메서드 보안 도입 전에 403 처리 필요 (19) — 위 배포 전 catch-all 항목(B6)을 고칠 때 같이 볼 수 있음
+- [ ] 허용되지 않은 origin의 CORS 거절(403)은 CorsFilter 기본 응답이라 ErrorResponse 형식이 아님 (19) — 403 상태는 CorsConfigTest로 확인됨, 본문 형식은 미검증
 - [ ] ROLE_ADMIN이 정의돼 있지만 역할로 막는 경로가 없어 시큐리티 403은 실제로 발생하지 않음. 역할 도입 시 JsonAccessDeniedHandler를 체인 테스트로 검증할 것 (19)
-- [ ] application.yml에 management.endpoints.web.exposure.include: health를 명시하면 기본값에 기대지 않고 노출 범위를 고정할 수 있음 (gitignore 대상이라 직접 수정 필요) (19)
-- [ ] 회원이 삭제된 뒤 만료 전 access 토큰으로 콘텐츠를 저장하면 FK 위반 500이 됨. 응답 정책(401 등) 결정 필요 (16, 19)
+- [ ] 회원이 삭제된 뒤 만료 전 access 토큰으로 콘텐츠를 저장하면 FK 위반 500이 됨. 응답 정책(401 등) 결정 필요 (16, 19) — 24-2 E: 탈퇴 기능이 없어 현재 재현 경로는 수동 삭제뿐
 - [ ] [향후 개선안] refresh 토큰을 httpOnly+Secure+SameSite 쿠키로 전환(XSS로 refresh 탈취 방지). 백엔드 수정 필요: login/refresh가 Set-Cookie로 발급·읽기, CORS allowCredentials + origin 명시, CSRF 대응(SameSite 또는 토큰), 로그아웃 엔드포인트(쿠키 삭제). 서버 저장/회전/폐기(task 14 backlog)와 함께 설계 권장 (21)
+
+## 해결됨
+- [x] isSaved가 userId를 반영하지 않음 → JWT 병합 시 확인 (task 17에서 해결: findByMemberIdAndExternalIdIn, decisions 2026-10-28)
+- [x] 배지 라벨 표기 통일 ("도서" vs "책", "TV 프로그램" vs "드라마") (task 01에서 해결: CATEGORY_LABEL 공용 상수로 통일, 프론트에 "도서"/"TV 프로그램" 문자열 없음)
+- [x] GET /api/highlights 모음집 API (프론트 /highlights가 이미 호출 중) (task 6에서 해결: HighlightController.getHighlights)
+- [x] 하이라이트 API도 프록시 없이 직접 호출해서 같은 CORS 실패 예상, GET /api/highlights 자체가 백엔드에 없음 (task 6, 8에서 해결: GET 추가 + SecurityConfig 전역 CORS)
+- [x] StatisticsController: month 없이 호출하면 NPE (null 체크 전에 비교) (task 19에서 해결: decisions 2026-11-01)
+- [x] HighlightRepositoryTest(Replace.NONE)와 DemoApplicationTests가 application.yml을 읽어 실제 Supabase에 붙음 (task 23에서 해결: 두 클래스 모두 @ActiveProfiles("test") + application-test.yml의 H2)
+- [x] 프론트 HighlightWithContent(content 중첩 + thumbnailUrl)와 HighlightResponseDto(평평한 contentId/Title/Category) 형태 불일치 (task 9에서 해결: types/index.ts에 HighlightWithContent 없음, 평평한 HighlightResponseDto 사용)
+- [x] 하이라이트 "영화/드라마" 탭이 MOVIE만 보내서 TV 하이라이트가 빠짐 (백엔드 resolveCategories에서 MOVIE+TV 묶기 또는 탭 분리, 09) (task 11에서 해결: 탭 분리, constants.ts CATEGORY_FILTER_TABS)
+- [x] GET /api/contents/filter 조건 없으면 findAll로 모든 사용자 콘텐츠 반환 → JWT 병합 시 userId 조건 필요 (09 작품 선택 목록이 사용 중) (task 17에서 해결: ContentService.getFilteredContents가 memberId 필수)
+- [x] 비밀번호 상한 64자(문자 수)와 BCrypt 72바이트 제한 불일치: 한글 등 멀티바이트 비밀번호는 64자 이내여도 72바이트를 넘어 뒤쪽이 잘린 채 해시될 수 있음 (13) (task 14에서 해결: MaxUtf8Bytes 검증, decisions 2026-10-24)
+- [x] DemoApplicationTests가 실제 PostgreSQL에 붙어 members 테이블을 생성함. 테스트 DB 분리 필요 (13, 기존 항목과 연결) (task 23에서 해결: @ActiveProfiles("test") + H2)
+- [x] 프론트가 모든 /api/** 요청에 Authorization: Bearer 헤더를 붙이는지, Next 프록시가 헤더를 전달하는지 확인 필요. task 19 이후 토큰이 없으면 전부 401 (19) (task 21에서 해결: api.ts send()가 /api/auth/ 외 모두에 Bearer를 붙이고, 수동 검증 체크리스트 9번에서 요청 헤더 확인)
