@@ -6,7 +6,7 @@
 
 ## 확인한 사실
 - 기존 `ci.yml`: `defaults.run.working-directory: demo`는 `run` 스텝에만 적용된다. `uses`(upload-artifact)의 `path`는 working-directory의 영향을 받지 않아 레포 루트 기준(`demo/build/...`)이 맞다.
-- XML 위치/형식(로컬 `./gradlew test` 후 확인): `demo/build/test-results/test/TEST-<FQCN>.xml`, 루트 `<testsuite name tests skipped failures errors>`. 중첩 클래스(`CorsConfigTest$CustomOrigins`)는 별도 파일이다. 로컬 집계: 파일 33개, tests 223, skipped 9, failures 0, errors 0. `ContentRepositoryPostgresTest`는 `tests="9" skipped="9"`.
+- XML 위치/형식(로컬 `./gradlew test` 후 확인): `demo/build/test-results/test/TEST-<FQCN>.xml`, 루트 `<testsuite name tests skipped failures errors>`. 중첩 클래스(`CorsConfigTest$CustomOrigins`)는 별도 파일이다. 로컬 집계: 파일 33개, 223개 실행, skipped 0, Postgres 9개 통과. `ContentRepositoryPostgresTest`는 `tests="9" skipped="9"`.
 - 스킵 조건: `@Testcontainers(disabledWithoutDocker = true)`는 Docker 사용 가능 여부를 클래스 실행 전에 검사해 불가능하면 클래스 전체를 skip한다. ubuntu-latest runner에는 Docker가 설치돼 있어 **실행될 것으로 예상**하나 이 PC에서는 확인할 수 없다 → **미확인**.
 
 ## 변경한 파일
