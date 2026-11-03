@@ -1,0 +1,23 @@
+# 테스트 전용 설정 (커밋 대상). main의 application.yml / application-api-key.yml 없이도 컨텍스트가 떠야 한다.
+# 사용: 테스트 클래스에 @ActiveProfiles("test")
+spring:
+  datasource:
+    url: jdbc:h2:mem:booklog-test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+  test:
+    database:
+      replace: none   # @DataJpaTest가 위 H2 URL(MODE=PostgreSQL)을 그대로 쓰게 한다
+  cache:
+    type: simple      # 테스트에서 Redis로 붙지 않는다
+
+# 가짜 JWT 값 (실제 값 아님). secret은 BASE64 디코딩 후 32바이트 이상이어야 한다
+jwt:
+  secret: ZmFrZS10ZXN0LW9ubHktc2VjcmV0LWtleS1kby1ub3QtdXNlLTAxMjM0NTY3ODk=
+  access-token-expiration: 60000
+  refresh-token-expiration: 600000

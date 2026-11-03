@@ -11,11 +11,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 
 import book_log.demo.DemoApplication;
@@ -29,7 +29,8 @@ import java.util.List;
 import java.util.Optional;
 
 @DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+// 테스트 전용 H2(MODE=PostgreSQL) 설정은 application-test.yml
+@ActiveProfiles("test")
 // DemoApplication 대신, 테스트에 꼭 필요한 '최소 단위'만 명시합니다.
 @ContextConfiguration(classes = {
     HighlightRepository.class,
@@ -50,7 +51,7 @@ class HighlightRepositoryTest {
     @Autowired
     private MemberRepository memberRepository;
 
-    // Content.member는 nullable=false라 작품마다 회원이 필요하다 (테스트 트랜잭션은 롤백되지만 실DB 데이터와 겹치지 않게 유니크한 아이디 사용)
+    // Content.member는 nullable=false라 작품마다 회원이 필요하다 (테스트 트랜잭션은 롤백되지만 겹치지 않게 유니크한 아이디 사용)
     private Member saveMember() {
         String unique = java.util.UUID.randomUUID().toString().substring(0, 8);
         return memberRepository.save(Member.builder()
