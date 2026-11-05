@@ -1,0 +1,21 @@
+# 비밀/로컬 설정: 이미지에 들어가면 레이어에 남는다
+.env*
+src/main/resources/application*.yml
+src/main/resources/application*.yaml
+src/main/resources/application*.properties
+
+# 빌드 산출물/IDE
+.gradle
+build
+bin
+.idea
+.vscode
+*.iml
+
+# 이미지에 불필요
+.git
+.gitignore
+.claude
+*.md
+Dockerfile
+.dockerignore
