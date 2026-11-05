@@ -44,3 +44,5 @@ node_modules/
 out/
 build/
 .env*.local
+# 운영 환경변수 파일 (값이 들어 있으므로 커밋하지 않는다. 변수 목록은 .env.example)
+.env

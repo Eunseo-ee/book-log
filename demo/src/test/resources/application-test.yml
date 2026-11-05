@@ -21,3 +21,8 @@ jwt:
   secret: ZmFrZS10ZXN0LW9ubHktc2VjcmV0LWtleS1kby1ub3QtdXNlLTAxMjM0NTY3ODk=
   access-token-expiration: 60000
   refresh-token-expiration: 600000
+
+# 가짜 외부 API 값 (실제 값 아님). ApiConfig가 @NotBlank라 비어 있으면 컨텍스트가 뜨지 않는다
+api:
+  kakao-key: fake-kakao-key
+  tmdb-token: fake-tmdb-token

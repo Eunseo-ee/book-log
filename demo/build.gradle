@@ -49,8 +49,6 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     runtimeOnly 'org.postgresql:postgresql'
-    // 임시 H2 데이터베이스 
-    runtimeOnly 'com.h2database:h2'
 
     // 테스트 관련 (이 부분을 아래처럼 정확히 수정해야 합니다)
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -60,6 +58,8 @@ dependencies {
     testImplementation 'org.testcontainers:postgresql'
     testImplementation 'org.testcontainers:junit-jupiter'
     
+    // 테스트 전용 임베디드 DB (운영 이미지에는 포함하지 않는다)
+    testRuntimeOnly 'com.h2database:h2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
