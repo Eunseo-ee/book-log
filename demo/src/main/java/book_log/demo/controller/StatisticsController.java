@@ -1,5 +1,6 @@
 package book_log.demo.controller;
 
+import java.time.Clock;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 
@@ -21,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 public class StatisticsController {
     
     private final StatisticsService statisticsService;
+    private final Clock clock;
 
     // 월별 통계 데이터 조회 API
     // GET /api/statistics?year=2026&month=4
@@ -32,8 +34,9 @@ public class StatisticsController {
             @AuthenticationPrincipal AuthenticatedMember member) {
 
                 // 값이 없으면 현재 날짜 기준 (null이 범위 검증에 닿기 전에 기본값부터 채운다)
-                int targetYear = (year != null) ? year : LocalDate.now().getYear();
-                int targetMonth = (month != null) ? month : LocalDate.now().getMonthValue();
+                LocalDate today = LocalDate.now(clock);
+                int targetYear = (year != null) ? year : today.getYear();
+                int targetMonth = (month != null) ? month : today.getMonthValue();
 
                 // 간단한 파라미터 검증
                 if (targetMonth < 1 || targetMonth > 12) {

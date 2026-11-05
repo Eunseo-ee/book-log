@@ -33,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 // 웹 계층만 띄운다 (DB 연결 없음). SecurityConfig는 슬라이스 스캔 대상이 아니라 직접 Import
 @WebMvcTest(controllers = {HighlightController.class, StatisticsController.class})
-@Import(SecurityConfig.class)
+@Import({ SecurityConfig.class, TimeConfig.class })
 class CorsConfigTest {
 
     private static final String ALLOWED = "http://localhost:3000";

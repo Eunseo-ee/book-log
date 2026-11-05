@@ -33,6 +33,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import book_log.demo.config.SecurityConfig;
+import book_log.demo.config.TimeConfig;
 import book_log.demo.controller.AuthController;
 import book_log.demo.controller.CalendarController;
 import book_log.demo.controller.ContentController;
@@ -50,7 +51,7 @@ import book_log.demo.service.StatisticsService;
 // actuator는 운영 설정이 어떻든 health 외에는 인증을 요구하는지 보려고, 일부러 env/beans까지 노출한 상태로 띄운다
 @WebMvcTest(controllers = { AuthController.class, CalendarController.class, ContentController.class,
         HighlightController.class, SearchController.class, StatisticsController.class })
-@Import({ SecurityConfig.class, ProtectedApiAccessTest.JwtTestConfig.class })
+@Import({ SecurityConfig.class, TimeConfig.class, ProtectedApiAccessTest.JwtTestConfig.class })
 @ImportAutoConfiguration({ ManagementContextAutoConfiguration.class, ServletManagementContextAutoConfiguration.class,
         EndpointAutoConfiguration.class, WebEndpointAutoConfiguration.class,
         WebMvcEndpointManagementContextConfiguration.class, HealthContributorAutoConfiguration.class,

@@ -9,6 +9,7 @@ import book_log.demo.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 
 import java.sql.SQLException;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
@@ -26,6 +27,7 @@ public class ContentService {
     
     private final ContentRepository contentRepository;
     private final MemberRepository memberRepository;
+    private final Clock clock;
 
     // PostgreSQL/H2 공통: unique_violation (FK 위반은 23503, NOT NULL 위반은 23502)
     private static final String SQL_STATE_UNIQUE_VIOLATION = "23505";
@@ -58,7 +60,7 @@ public class ContentService {
         }
 
         // 2. 미래 날짜 검증 (추가!)
-        if (requestDto.getViewDate() != null && requestDto.getViewDate().isAfter(LocalDate.now())) {
+        if (requestDto.getViewDate() != null && requestDto.getViewDate().isAfter(LocalDate.now(clock))) {
             throw new IllegalArgumentException("미래 날짜의 기록은 저장할 수 없습니다.");
         }
 

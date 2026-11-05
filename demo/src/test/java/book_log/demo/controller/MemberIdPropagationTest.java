@@ -20,6 +20,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import book_log.demo.config.SecurityConfig;
+import book_log.demo.config.TimeConfig;
 import book_log.demo.domain.Category;
 import book_log.demo.security.JwtTokenProvider;
 import book_log.demo.security.TestAuth;
@@ -32,7 +33,7 @@ import book_log.demo.service.StatisticsService;
 // 로그인 사용자의 id(7)가 하드코딩 1L이 아니라 서비스 호출 인자로 그대로 넘어가는지 확인한다
 @WebMvcTest(controllers = { CalendarController.class, ContentController.class, HighlightController.class,
         SearchController.class, StatisticsController.class })
-@Import(SecurityConfig.class)
+@Import({ SecurityConfig.class, TimeConfig.class })
 class MemberIdPropagationTest {
 
     private static final long ME = 7L;

@@ -11,9 +11,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.sql.SQLException;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,6 +34,10 @@ class ContentServiceTest {
 
     @Mock
     private MemberRepository memberRepository;
+
+    // 서비스 생성자에 Clock이 추가되어 주입만 보충. 기존 테스트는 LocalDate.now()(JVM 기본 시간대)와 비교하므로 같은 시간대의 시계를 쓴다
+    @Spy
+    private Clock clock = Clock.systemDefaultZone();
 
     @InjectMocks
     private ContentService contentService;
@@ -239,5 +248,35 @@ class ContentServiceTest {
         assertTrue(contentService.findSavedKeys(1L, null).isEmpty());
 
         verify(contentRepository, never()).findByMemberIdAndExternalIdIn(any(), any());
+    }
+
+    // KST 경계: 두 시각 모두 UTC 날짜와 KST 날짜가 다르다. 서비스는 fixed 시계의 KST 날짜를 "오늘"로 본다
+    private ContentService serviceAt(String utcInstant) {
+        Clock fixed = Clock.fixed(Instant.parse(utcInstant), ZoneId.of("Asia/Seoul"));
+        return new ContentService(contentRepository, memberRepository, fixed);
+    }
+
+    private ContentRequestDto dtoOn(LocalDate viewDate) {
+        return ContentRequestDto.builder().rating(0.0).externalId("e1").category(Category.MOVIE).viewDate(viewDate).build();
+    }
+
+    @Test
+    @DisplayName("KST 5/31 23:59(UTC 5/31 14:59): 5/31은 저장되고 6/1은 미래라 거부된다")
+    void saveContent_BoundaryBeforeKstMidnight() {
+        ContentService service = serviceAt("2026-05-31T14:59:00Z");
+        when(contentRepository.save(any(Content.class))).thenReturn(Content.builder().id(1L).build());
+
+        assertEquals(1L, service.saveContent(1L, dtoOn(LocalDate.of(2026, 5, 31))));
+        assertThrows(IllegalArgumentException.class, () -> service.saveContent(1L, dtoOn(LocalDate.of(2026, 6, 1))));
+    }
+
+    @Test
+    @DisplayName("KST 6/1 00:01(UTC 5/31 15:01): UTC 날짜는 5/31이어도 6/1은 저장되고 6/2는 거부된다")
+    void saveContent_BoundaryAfterKstMidnight() {
+        ContentService service = serviceAt("2026-05-31T15:01:00Z");
+        when(contentRepository.save(any(Content.class))).thenReturn(Content.builder().id(2L).build());
+
+        assertEquals(2L, service.saveContent(1L, dtoOn(LocalDate.of(2026, 6, 1))));
+        assertThrows(IllegalArgumentException.class, () -> service.saveContent(1L, dtoOn(LocalDate.of(2026, 6, 2))));
     }
 }
