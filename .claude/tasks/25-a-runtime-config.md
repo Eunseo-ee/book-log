@@ -38,7 +38,8 @@ application.yml, application-api-key.yml, HighlightRepositoryTest, ci.yml은 건
 | `JWT_SECRET` | jwt.secret (BASE64, 32바이트 이상) | 필수(JwtProperties가 검증) | 예 |
 | `JWT_ACCESSTOKENEXPIRATION` | jwt.access-token-expiration (ms) | 필수 | 아니오 |
 | `JWT_REFRESHTOKENEXPIRATION` | jwt.refresh-token-expiration (ms) | 필수 | 아니오 |
-| `APP_CORS_ALLOWED_ORIGINS` | app.cors.allowed-origins | 운영에선 사실상 필수(기본값은 localhost) | 아니오 |
+| `APP_CORS_ALLOWED_ORIGINS` | app.cors.allowed-origins | 운영에선 필수(prod 프로파일이면 비었을 때 기동 실패, 25-d). 쉼표 구분, `*` 금지 | 아니오 |
+| `SPRING_PROFILES_ACTIVE` | spring.profiles.active | 운영에선 `prod` 지정(25-d) | 아니오 |
 | `SPRING_JPA_HIBERNATE_DDL_AUTO` | spring.jpa.hibernate.ddl-auto | `validate`로 지정 | 아니오 |
 | `SPRING_JPA_SHOW_SQL` | spring.jpa.show-sql | `false`로 지정 | 아니오 |
 | (주입 불가/불필요) | spring.jpa.properties.hibernate.format_sql | — | — |

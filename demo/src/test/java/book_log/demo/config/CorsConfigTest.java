@@ -2,6 +2,7 @@ package book_log.demo.config;
 
 import book_log.demo.controller.HighlightController;
 import book_log.demo.controller.StatisticsController;
+import book_log.demo.exception.ForbiddenResourceException;
 import book_log.demo.security.JwtTokenProvider;
 import book_log.demo.security.TestAuth;
 import book_log.demo.service.HighlightService;
@@ -25,7 +26,9 @@ import java.util.List;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.containsStringIgnoringCase;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -120,6 +123,24 @@ class CorsConfigTest {
     }
 
     @Test
+    @DisplayName("컨트롤러가 던진 403(남의 하이라이트)에도 허용 origin이면 CORS 헤더가 붙는다")
+    void forbiddenResponseKeepsCorsHeader() throws Exception {
+        doThrow(new ForbiddenResourceException()).when(highlightService).deleteHighlight(any(), any());
+
+        mockMvc.perform(delete("/api/highlights/1").header(HttpHeaders.ORIGIN, ALLOWED).with(TestAuth.member(1L)))
+                .andExpect(status().isForbidden())
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, ALLOWED));
+    }
+
+    @Test
+    @DisplayName("허용 origin 응답에는 Allow-Credentials가 없다 (Authorization 헤더 방식이라 쿠키 불필요)")
+    void noCredentialsHeader() throws Exception {
+        mockMvc.perform(preflight("/api/highlights", ALLOWED, "GET"))
+                .andExpect(status().isOk())
+                .andExpect(header().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS));
+    }
+
+    @Test
     @DisplayName("@CrossOrigin(\"*\")을 제거한 통계 API도 전역 규칙을 따른다")
     void statisticsFollowsGlobalRule() throws Exception {
         mockMvc.perform(preflight("/api/statistics", ALLOWED, "GET"))
@@ -140,7 +161,7 @@ class CorsConfigTest {
     }
 
     @Nested
-    @TestPropertySource(properties = "app.cors.allowed-origins=https://book-log.example.com,http://localhost:3000")
+    @TestPropertySource(properties = "app.cors.allowed-origins= https://book-log.example.com/ , http://localhost:3000 ,")
     @DisplayName("app.cors.allowed-origins로 허용 origin을 바꿀 수 있다")
     class CustomOrigins {
 

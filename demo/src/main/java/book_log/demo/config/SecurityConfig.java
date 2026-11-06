@@ -2,9 +2,10 @@ package book_log.demo.config;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -30,9 +31,8 @@ import book_log.demo.security.JwtTokenProvider;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    // 허용할 프론트 주소. 여러 개면 쉼표로 구분 (배포 시 이 값만 바꾼다)
-    @Value("${app.cors.allowed-origins:http://localhost:3000}")
-    private String[] allowedOrigins;
+    // 로컬 개발용 기본 origin. prod 프로파일에서는 쓰지 않는다
+    static final String DEV_DEFAULT_ORIGIN = "http://localhost:3000";
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JwtTokenProvider jwtTokenProvider,
@@ -80,10 +80,22 @@ public class SecurityConfig {
     }
 
     // 전역 CORS 설정. 컨트롤러별 @CrossOrigin은 쓰지 않는다
+    // 허용 origin은 app.cors.allowed-origins(환경변수 APP_CORS_ALLOWED_ORIGINS), 여러 개면 쉼표로 구분
+    // 인증은 Authorization 헤더라 쿠키가 필요 없어 allowCredentials는 설정하지 않는다(false)
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+    public CorsConfigurationSource corsConfigurationSource(Environment env) {
+        List<String> origins = CorsOrigins.parse(env.getProperty("app.cors.allowed-origins"));
+        if (origins.isEmpty()) {
+            // 운영에서 값이 빠진 채 localhost만 허용하는 상태로 조용히 뜨지 않게 기동을 막는다
+            if (env.acceptsProfiles(Profiles.of("prod"))) {
+                throw new IllegalStateException(
+                        "prod 프로파일에서는 app.cors.allowed-origins(APP_CORS_ALLOWED_ORIGINS)가 필요합니다.");
+            }
+            origins = List.of(DEV_DEFAULT_ORIGIN);
+        }
+
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(allowedOrigins));
+        config.setAllowedOrigins(origins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setMaxAge(3600L);

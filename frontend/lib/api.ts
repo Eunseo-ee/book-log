@@ -14,10 +14,12 @@ import type {
 } from '@/types'
 import { clearSession, getAccessToken, getGeneration, getRefreshToken, setAccessToken } from '@/lib/authStore'
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080'
+// 백엔드 주소. next.config.js가 NEXT_PUBLIC_API_URL을 검증·정규화(끝 슬래시 제거)해 빌드 시점에 번들에 박는다
+// 런타임 환경변수로는 바꿀 수 없다. production 빌드에서 값이 없으면 빌드가 실패한다
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL as string
 
-// 브라우저에서 호출하는 검색/저장/캘린더 API는 next.config.js의 rewrites 프록시(/api/* → Spring)를 거친다.
-// 같은 출처 요청이라 백엔드 CORS 설정이 필요 없다. (백엔드 @CrossOrigin은 StatisticsController에만 있음)
+// 검색/저장/캘린더/인증 API는 next.config.js의 rewrites 프록시(/api/* → Spring)를 거친다 (같은 출처, 서버끼리 호출).
+// 통계·하이라이트·contents filter/check는 BASE_URL로 브라우저가 백엔드를 직접 호출하므로 백엔드 CORS(APP_CORS_ALLOWED_ORIGINS)가 필요하다
 const PROXY_BASE_URL = ''
 
 // 실패 응답의 상태 코드와 본문을 함께 들고 있는 에러
