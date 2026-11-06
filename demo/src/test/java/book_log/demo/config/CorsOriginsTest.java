@@ -41,6 +41,45 @@ class CorsOriginsTest {
         assertThatThrownBy(() -> CorsOrigins.parse("https://*.vercel.app")).isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("정상 혼합 값은 통과하고 끝 슬래시만 제거된다 (포트·http/https 모두)")
+    void validMixedValues() {
+        assertThat(CorsOrigins.parse("http://localhost:3000, https://app.example.com/"))
+                .containsExactly("http://localhost:3000", "https://app.example.com");
+    }
+
+    @Test
+    @DisplayName("스킴이 없거나 http(s)가 아니면 거부하고, 메시지에 잘못된 값만 담는다")
+    void rejectsMissingScheme() {
+        assertThatThrownBy(() -> CorsOrigins.parse("https://ok.example.com, myapp.vercel.app"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("myapp.vercel.app")
+                .hasMessageNotContaining("ok.example.com");
+        assertThatThrownBy(() -> CorsOrigins.parse("ftp://a.example")).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> CorsOrigins.parse("//a.example")).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> CorsOrigins.parse("localhost:3000")).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> CorsOrigins.parse("HTTPS://A.example")).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> CorsOrigins.parse("https://")).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("경로·쿼리·프래그먼트·사용자정보가 붙은 값은 거부한다 (끝 슬래시만 있는 건 허용)")
+    void rejectsPathQueryFragment() {
+        for (String bad : List.of("https://a.com/path", "https://a.com/path/", "https://a.com?x=1",
+                "https://a.com#top", "https://user@a.com", "https://a .com", "https://a	.com")) {
+            assertThatThrownBy(() -> CorsOrigins.parse(bad)).as(bad).isInstanceOf(IllegalStateException.class);
+        }
+        assertThat(CorsOrigins.parse("https://a.com///")).containsExactly("https://a.com");
+    }
+
+    @Test
+    @DisplayName("스킴 없는 값을 환경변수로 넣으면 CORS 설정 생성(기동)이 실패한다")
+    void invalidFromEnvFails() {
+        assertThatThrownBy(() -> configFor(envWith(Map.of("APP_CORS_ALLOWED_ORIGINS", "myapp.vercel.app"))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("myapp.vercel.app");
+    }
+
     // 실제 OS 환경변수와 같은 종류의 소스(systemEnvironment)로 넣어 relaxed binding을 그대로 탄다
     private static StandardEnvironment envWith(Map<String, Object> vars, String... profiles) {
         StandardEnvironment env = new StandardEnvironment();
