@@ -12,7 +12,9 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -48,7 +50,14 @@ public class TmdbSearchService implements SearchProvider {
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
         // 2. Multi 검색 URL 설정
-        String url = "https://api.themoviedb.org/3/search/multi?query=" + query + "&language=ko-KR&page=" + page;
+        // 검색어는 URI 변수로 넣고 .encode()로 값 전체를 인코딩한다 (& # + 안전). URI 객체를 넘기므로 이중 인코딩도 없다.
+        URI url = UriComponentsBuilder.fromUriString("https://api.themoviedb.org/3/search/multi")
+                .queryParam("query", "{query}")
+                .queryParam("language", "ko-KR")
+                .queryParam("page", page)
+                .encode()
+                .buildAndExpand(query)
+                .toUri();
 
         try {
             // 3. API 호출

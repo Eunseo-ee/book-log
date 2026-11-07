@@ -1,5 +1,6 @@
 package book_log.demo.service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -7,13 +8,16 @@ import java.util.Comparator;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.util.ClassUtils;
 
 import book_log.demo.domain.Category;
 import book_log.demo.dto.response.SearchResponse;
 import book_log.demo.dto.response.UnifiedSearchResponse;
 import book_log.demo.service.ContentService.SavedKey;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SearchService {
@@ -95,8 +99,10 @@ public class SearchService {
 
     private SearchResponse searchAll(String query, int page) {
         // 모든 제공자의 응답을 리스트로 먼저 받습니다.
+        // Provider 단위로 실패를 격리한다: 하나가 예외를 던져도 나머지 결과는 정상 반환한다.
+        // (호출은 기존처럼 순차. 병렬화는 격리에 필요하지 않아 하지 않았다.)
         List<SearchResponse> responses = providers.stream()
-                .map(p -> p.search(Category.ALL, query, page))
+                .map(p -> searchIsolated(p, query, page))
                 .collect(Collectors.toList());
 
         // 1. 결과 데이터 합치기 및 정렬
@@ -113,6 +119,27 @@ public class SearchService {
                 .results(combinedResults)
                 .totalPages(maxTotalPages)
                 .totalResults(totalResults)
+                .build();
+    }
+
+    // 외부 API 장애는 우리가 통제할 수 없으므로 한 Provider의 실패가 통합 검색 전체를 죽이면 안 된다.
+    // Tmdb/Kakao는 스스로 빈 응답으로 바꾸지만, 앞으로 추가될 Provider나 예상 못 한 예외(캐시 계층 포함)에 대비한 마지막 방어선이다.
+    // 모든 Provider가 실패하면 개별 Provider의 기존 실패 응답과 같은 형태(빈 결과, totalPages 1, totalResults 0)가 된다.
+    private SearchResponse searchIsolated(SearchProvider provider, String query, int page) {
+        try {
+            SearchResponse response = provider.search(Category.ALL, query, page);
+            if (response != null && response.getResults() != null) {
+                return response;
+            }
+            log.warn("검색 Provider가 빈 응답(null)을 반환했습니다 [{}]", ClassUtils.getUserClass(provider).getSimpleName());
+        } catch (Exception e) {
+            // 예외 객체를 마지막 인자로 넘겨 원인(스택트레이스)을 로그에 보존한다. 검색어는 남기지 않는다.
+            log.warn("검색 Provider 실패, 결과에서 제외합니다 [{}]", ClassUtils.getUserClass(provider).getSimpleName(), e);
+        }
+        return SearchResponse.builder()
+                .results(Collections.emptyList())
+                .totalPages(1)
+                .totalResults(0)
                 .build();
     }
 }

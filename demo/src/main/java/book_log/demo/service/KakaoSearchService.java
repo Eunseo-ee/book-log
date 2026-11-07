@@ -6,17 +6,24 @@ import book_log.demo.dto.response.KakaoBookResponse;
 import book_log.demo.dto.response.SearchResponse;
 import book_log.demo.dto.response.UnifiedSearchResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor // final 생성자 자동 생성
 public class KakaoSearchService implements SearchProvider {
     
+    private static final String BOOK_SEARCH_URL = "https://dapi.kakao.com/v3/search/book";
+
     private final RestTemplate restTemplate;
     private final ApiConfig apiConfig;
 
@@ -33,22 +40,41 @@ public class KakaoSearchService implements SearchProvider {
         headers.set("Authorization", "KakaoAK "+apiConfig.getKakaoKey());
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        // 2. URL 설정
-        String url = "https://dapi.kakao.com/v3/search/book?query="+query;
+        // 2. URL 설정: 검색어는 문자열 연결이 아니라 URI 변수로 넣고 .encode()로 값 전체를 인코딩한다.
+        //    (& # + 같은 문자가 파라미터 구분자/fragment로 해석되지 않는다.)
+        //    완성된 URI 객체를 넘기므로 RestTemplate이 한 번 더 인코딩하지 않는다.
+        URI uri = UriComponentsBuilder.fromUriString(BOOK_SEARCH_URL)
+                .queryParam("query", "{query}")
+                .encode()
+                .buildAndExpand(query)
+                .toUri();
 
-        // 3. API 호출
-        ResponseEntity<KakaoBookResponse> response = restTemplate.exchange(url, HttpMethod.GET, entity, KakaoBookResponse.class);
-        KakaoBookResponse body = response.getBody();
+        try {
+            // 3. API 호출
+            ResponseEntity<KakaoBookResponse> response = restTemplate.exchange(uri, HttpMethod.GET, entity, KakaoBookResponse.class);
+            KakaoBookResponse body = response.getBody();
 
-        // 전체 페이지 계산 (카카오 응답의 total_count 활용)
-        int totalCount = body.getMeta().getTotalCount();
-        int totalPages = (int) Math.ceil((double) totalCount / 20);
+            // 전체 페이지 계산 (카카오 응답의 total_count 활용)
+            int totalCount = body.getMeta().getTotalCount();
+            int totalPages = (int) Math.ceil((double) totalCount / 20);
 
-        return SearchResponse.builder()
-            .results(mapToResponse(body, category))
-            .totalPages(totalPages)
-            .totalResults(totalCount)
-            .build();
+            return SearchResponse.builder()
+                .results(mapToResponse(body, category))
+                .totalPages(totalPages)
+                .totalResults(totalCount)
+                .build();
+
+        } catch (Exception e) {
+            // TmdbSearchService와 같은 정책: 외부 API 실패(4xx/5xx/타임아웃/파싱 실패/빈 응답)는 규격에 맞는 빈 응답으로 바꾼다.
+            // 로그에는 예외 종류와 메시지만 남긴다. Authorization 헤더는 요청 객체에만 있고 RestTemplate 예외 메시지에는 들어가지 않는다.
+            log.error("Kakao API 호출 중 예외 발생 [{}]: {}", e.getClass().getSimpleName(), e.getMessage());
+
+            return SearchResponse.builder()
+                    .results(Collections.emptyList())
+                    .totalPages(1)
+                    .totalResults(0)
+                    .build();
+        }
     }
 
     private List<UnifiedSearchResponse> mapToResponse(KakaoBookResponse body, Category category) {

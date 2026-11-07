@@ -94,7 +94,7 @@ class CacheFailureFallbackTest {
         response.setTotalResults(1);
 
 
-        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
+        when(restTemplate.exchange(any(java.net.URI.class), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
                 .thenReturn(ResponseEntity.ok(response));
 
         SearchResponse first = tmdbSearchService.search(Category.ALL, "엘리멘탈", 1);
@@ -104,6 +104,6 @@ class CacheFailureFallbackTest {
         assertThat(second.getResults()).hasSize(1);
         // 캐시를 쓸 수 없으니 매번 외부 API를 호출 (성능은 떨어지지만 기능은 유지)
         verify(restTemplate, times(2))
-                .exchange(anyString(), eq(HttpMethod.GET), any(), eq(TmdbResponse.class));
+                .exchange(any(java.net.URI.class), eq(HttpMethod.GET), any(), eq(TmdbResponse.class));
     }
 }

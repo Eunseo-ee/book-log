@@ -69,7 +69,7 @@ class KakaoSearchServiceTest {
         body.setMeta(meta);
 
         when(apiConfig.getKakaoKey()).thenReturn("test-key");
-        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(KakaoBookResponse.class)))
+        when(restTemplate.exchange(any(java.net.URI.class), eq(HttpMethod.GET), any(), eq(KakaoBookResponse.class)))
                 .thenReturn(ResponseEntity.ok(body));
 
         SearchResponse response = kakaoSearchService.search(Category.BOOK, "테스트", 1);

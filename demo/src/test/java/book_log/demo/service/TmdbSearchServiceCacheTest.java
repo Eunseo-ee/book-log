@@ -132,7 +132,7 @@ class TmdbSearchServiceCacheTest {
     @Test
     @DisplayName("TMDB 장애로 반환된 빈 결과는 캐싱되지 않고, 복구되면 정상 결과가 캐싱된다")
     void apiFailure_isNotCached() {
-        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
+        when(restTemplate.exchange(any(java.net.URI.class), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
                 .thenThrow(new ResourceAccessException("timeout"))
                 .thenReturn(ResponseEntity.ok(movieResponse("복구됨")));
 
@@ -166,13 +166,13 @@ class TmdbSearchServiceCacheTest {
     // ---- helpers ----
 
     private void stubTmdbReturns(TmdbResponse response) {
-        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
+        when(restTemplate.exchange(any(java.net.URI.class), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
                 .thenReturn(ResponseEntity.ok(response));
     }
 
     private void verifyTmdbCalls(int times) {
         verify(restTemplate, times(times))
-                .exchange(anyString(), eq(HttpMethod.GET), any(), eq(TmdbResponse.class));
+                .exchange(any(java.net.URI.class), eq(HttpMethod.GET), any(), eq(TmdbResponse.class));
     }
 
     private TmdbResponse movieResponse(String title) {

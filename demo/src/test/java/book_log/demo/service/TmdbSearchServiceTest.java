@@ -51,7 +51,7 @@ public class TmdbSearchServiceTest {
         mockResponse.setTotalPages(1);    // 페이지 정보 추가
         mockResponse.setTotalResults(1);  // 결과 수 정보 추가
 
-        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
+        when(restTemplate.exchange(any(java.net.URI.class), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
                 .thenReturn(ResponseEntity.ok(mockResponse));
 
         // when (반환 타입 변경: List -> SearchResponse)
@@ -73,7 +73,7 @@ public class TmdbSearchServiceTest {
         emptyResponse.setTotalPages(1);
         emptyResponse.setTotalResults(0);
 
-        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
+        when(restTemplate.exchange(any(java.net.URI.class), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
                 .thenReturn(ResponseEntity.ok(emptyResponse));
 
         // when
@@ -89,7 +89,7 @@ public class TmdbSearchServiceTest {
     void timeoutHandlingTest() {
         // given
         when(apiConfig.getTmdbToken()).thenReturn("test-token");
-        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
+        when(restTemplate.exchange(any(java.net.URI.class), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
                 .thenThrow(new org.springframework.web.client.ResourceAccessException("Timeout"));
 
         // when
@@ -115,7 +115,7 @@ public class TmdbSearchServiceTest {
         mockResponse.setTotalPages(1);
         mockResponse.setTotalResults(1);
 
-        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
+        when(restTemplate.exchange(any(java.net.URI.class), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
                 .thenReturn(ResponseEntity.ok(mockResponse));
 
         // when
@@ -143,7 +143,7 @@ public class TmdbSearchServiceTest {
         mockResponse.setResults(List.of(badItem, goodItem));
         mockResponse.setTotalPages(1);
 
-        when(restTemplate.exchange(anyString(), any(), any(), eq(TmdbResponse.class)))
+        when(restTemplate.exchange(any(java.net.URI.class), any(), any(), eq(TmdbResponse.class)))
                 .thenReturn(ResponseEntity.ok(mockResponse));
 
         // when
@@ -171,7 +171,7 @@ public class TmdbSearchServiceTest {
         mockResponse.setTotalPages(1);
         mockResponse.setTotalResults(1);
 
-        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
+        when(restTemplate.exchange(any(java.net.URI.class), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
                 .thenReturn(ResponseEntity.ok(mockResponse));
 
         // when
@@ -197,7 +197,7 @@ public class TmdbSearchServiceTest {
         mockResponse.setTotalPages(1);
         mockResponse.setTotalResults(1);
 
-        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
+        when(restTemplate.exchange(any(java.net.URI.class), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
                 .thenReturn(ResponseEntity.ok(mockResponse));
 
         // when
@@ -228,7 +228,7 @@ public class TmdbSearchServiceTest {
         mockResponse.setTotalPages(1);
         mockResponse.setTotalResults(2);
 
-        when(restTemplate.exchange(anyString(), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
+        when(restTemplate.exchange(any(java.net.URI.class), eq(HttpMethod.GET), any(), eq(TmdbResponse.class)))
                 .thenReturn(ResponseEntity.ok(mockResponse));
 
         // when
