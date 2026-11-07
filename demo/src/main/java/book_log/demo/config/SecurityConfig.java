@@ -36,7 +36,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JwtTokenProvider jwtTokenProvider,
-            ObjectMapper objectMapper) throws Exception {
+            ObjectMapper objectMapper, Environment env) throws Exception {
         http
             // 1. CSRF 보안 비활성화 (POST 요청을 허용하기 위해 필수)
             .csrf(AbstractHttpConfigurer::disable)
@@ -49,12 +49,16 @@ public class SecurityConfig {
 
             // 3. 로그인/가입/재발급, Swagger, actuator health만 공개하고 나머지는 인증 필요
             // CORS preflight(OPTIONS)는 위 cors()가 등록한 CorsFilter가 인가 검사보다 먼저 응답한다
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
-                .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
-                .anyRequest().authenticated()
-            )
+            // prod에서는 springdoc 자체가 꺼져 있으므로(ops-prod.properties) Swagger 경로를 열어 두지 않는다.
+            // 열어 두면 핸들러 없는 경로가 인증 없이 DispatcherServlet까지 가 catch-all 500이 된다. 닫으면 401
+            .authorizeHttpRequests(auth -> {
+                auth.requestMatchers("/api/auth/**").permitAll();
+                if (!env.acceptsProfiles(Profiles.of("prod"))) {
+                    auth.requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll();
+                }
+                auth.requestMatchers("/actuator/health", "/actuator/health/**").permitAll();
+                auth.anyRequest().authenticated();
+            })
 
             // 401/403도 GlobalExceptionHandler와 같은 ErrorResponse JSON으로 통일한다
             .exceptionHandling(ex -> ex
