@@ -16,6 +16,8 @@ RUN ./gradlew --no-daemon bootJar -x test \
 # ---- 런타임 스테이지: JRE + jar만 ----
 FROM eclipse-temurin:21.0.13_9-jre-noble
 ENV TZ=Asia/Seoul
+# 운영 기본 프로파일. 없으면 Swagger가 열리고 CORS가 localhost 기본값으로 뜬다 (25-d, 25-e). 배포 환경변수로 덮어쓸 수 있다
+ENV SPRING_PROFILES_ACTIVE=prod
 WORKDIR /app
 
 # 비 root 사용자 (베이스 이미지에 있는 ubuntu 계정 사용)
