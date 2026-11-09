@@ -2,6 +2,7 @@ package book_log.demo.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.DisplayName;
@@ -12,9 +13,8 @@ import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.boot.context.properties.source.ConfigurationPropertySources;
 import org.springframework.boot.test.context.assertj.AssertableApplicationContext;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
-import org.springframework.boot.test.util.TestPropertyValues;
-import org.springframework.boot.test.util.TestPropertyValues.Type;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.env.SystemEnvironmentPropertySource;
 import org.springframework.context.annotation.Import;
@@ -33,8 +33,19 @@ class EnvironmentBindingTest {
             .withBean(RestTemplateBuilder.class, RestTemplateBuilder::new);
 
     private ApplicationContextRunner withEnv(String... vars) {
-        // 실제 OS 환경변수 소스(systemEnvironment)와 같은 종류인 SystemEnvironmentPropertySource로 넣는다
-        return runner.withInitializer(ctx -> TestPropertyValues.of(vars).applyTo(ctx.getEnvironment(), Type.SYSTEM_ENVIRONMENT));
+        // 실제 OS 환경변수 소스(systemEnvironment)를 통째로 이 테스트가 만든 소스로 바꾼다.
+        // TestPropertyValues(SYSTEM_ENVIRONMENT)는 기존 소스에 덧붙이기만 해서 CI가 주입한 API_KAKAOKEY 등이 그대로 남는다 (25-a-1)
+        return runner.withInitializer(ctx -> isolateSystemEnvironment(ctx.getEnvironment(), vars));
+    }
+
+    private static void isolateSystemEnvironment(ConfigurableEnvironment env, String... vars) {
+        Map<String, Object> map = new HashMap<>();
+        for (String v : vars) {
+            int i = v.indexOf('=');
+            map.put(v.substring(0, i), v.substring(i + 1));
+        }
+        env.getPropertySources().replace(StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME,
+                new SystemEnvironmentPropertySource(StandardEnvironment.SYSTEM_ENVIRONMENT_PROPERTY_SOURCE_NAME, map));
     }
 
     @Test
@@ -69,16 +80,16 @@ class EnvironmentBindingTest {
             assertThat(rootMessages(ctx)).contains("tmdbToken");
         });
         withEnv("API_KAKAOKEY=   ", "API_TMDBTOKEN=t").run(ctx -> assertThat(ctx).hasFailed());
-        runner.run(ctx -> assertThat(ctx).hasFailed());
+        withEnv().run(ctx -> assertThat(ctx).hasFailed());
     }
 
     @Test
     @DisplayName("JWT_* 환경변수가 JwtProperties에 바인딩되는 이름을 확인한다")
     void jwtNames() {
         new ApplicationContextRunner().withUserConfiguration(JwtCfg.class)
-                .withInitializer(ctx -> TestPropertyValues.of("JWT_SECRET=" + book_log.demo.security.TestJwt.FAKE_SECRET,
-                        "JWT_ACCESSTOKENEXPIRATION=1000", "JWT_REFRESHTOKENEXPIRATION=2000")
-                        .applyTo(ctx.getEnvironment(), Type.SYSTEM_ENVIRONMENT))
+                .withInitializer(ctx -> isolateSystemEnvironment(ctx.getEnvironment(),
+                        "JWT_SECRET=" + book_log.demo.security.TestJwt.FAKE_SECRET,
+                        "JWT_ACCESSTOKENEXPIRATION=1000", "JWT_REFRESHTOKENEXPIRATION=2000"))
                 .run(ctx -> {
                     assertThat(ctx).hasNotFailed();
                     assertThat(ctx.getBean(JwtProperties.class).getAccessTokenExpiration()).isEqualTo(1000L);
