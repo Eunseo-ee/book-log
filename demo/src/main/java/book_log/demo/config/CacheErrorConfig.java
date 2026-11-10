@@ -20,6 +20,7 @@ public class CacheErrorConfig implements CachingConfigurer {
     @Override
     public CacheErrorHandler errorHandler() {
         // 스프링 제공 구현체: get/put/evict/clear 실패를 로그만 남기고 무시
-        return new LoggingCacheErrorHandler();
+        // [임시 진단 25-i] true = 스택트레이스(Caused by)까지 WARN으로 남김. 원인 확인 후 되돌릴지 결정 (되돌리기: 인자 제거)
+        return new LoggingCacheErrorHandler(true);
     }
 }
