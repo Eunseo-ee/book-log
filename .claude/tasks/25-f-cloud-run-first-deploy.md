@@ -331,7 +331,7 @@ curl -i -X OPTIONS "<백엔드URL>/api/<직접 호출 API 경로>" \
 
 ### 미확정 (사용자가 정해야/확인해야 함)
 1. **GCP 프로젝트 ID** (`<PROJECT>`로 유지, 레포에 기록하지 않음)
-2. **Supabase 풀러 실제 연결 한도**: 대시보드에서 확인. 최대 연결 10(2 × 5)이 한도 안인지 확인하고, 넘으면 풀 크기/maxScale을 낮춤
+2. **Supabase 풀러 실제 연결 한도**: 대시보드에서 확인. 최대 연결 10(2 × 5)이 한도 안인지 확인하고, 넘으면 풀 크기/maxScale을  -> 한도 15 확인
 3. **로컬이 쓰는 풀러 포트**: 로컬 설정이 transaction pooler(6543)인지 session(5432)인지 확인(운영은 5432로 확정이라 URL의 `prepareThreshold=0` 유무가 로컬과 달라질 수 있음)
 4. **JWT_SECRET 실제 버전 번호**(첫 버전이면 1): `versions list`로 확인 후 YAML에 반영
 5. asia-northeast1이 Cloud Run 리전 목록에 있는지, 서비스 계정 배포 권한 형태 등 **gcloud 명령/YAML 문법 전반의 공식 문서 대조**(미검증)
