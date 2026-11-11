@@ -41,7 +41,7 @@ class ContentRepositoryPostgresTest {
     static class TestConfig {
     }
 
-    // Supabase 버전은 확인하지 못해 15로 가정한 값이다 (task 20 참고)
+    // 운영 Supabase는 PostgreSQL 17.6(2026-11-11 확인). 메이저 버전만 맞추고 마이너는 고정하지 않는다 (decisions.md 참고)
     @Container
     @ServiceConnection
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:17-alpine");

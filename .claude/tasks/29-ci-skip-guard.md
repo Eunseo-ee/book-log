@@ -30,8 +30,8 @@ Test summary 스크립트에서 **요약을 stdout과 `GITHUB_STEP_SUMMARY`에 �
 3. (선택) 가드가 진짜 실패하는지는 일부러 확인하지 않아도 됨(3절 시뮬레이션으로 갈음). 확인하려면 임시 브랜치에서 테스트에 `@Disabled`를 붙여 보면 되지만 이번엔 하지 않음.
 
 ## 5. 후속 항목 (기록만, 수정 안 함)
-1. 테스트 이미지 `postgres:17-alpine`(`ContentRepositoryPostgresTest.java:47`) vs Supabase 실제 버전: Supabase SQL editor에서 `select version();` 확인 필요.
-2. 같은 파일의 주석 "15로 가정"과 이미지 17 불일치. decisions.md 2026-11-01 항목의 `postgres:15-alpine`도 낡음.
+1. **해결됨(2026-11-11)** 테스트 이미지 vs Supabase 실제 버전: `select version();` 결과 PostgreSQL 17.6 (aarch64-unknown-linux-gnu, gcc 15.2.0). 이미지 `postgres:17-alpine`과 메이저 일치, 이미지 변경 불필요. (확인 방법은 사용자가 SQL 편집기에서 실행한 결과를 전달받은 것)
+2. **해결됨(2026-11-11)** 코드 주석 "15로 가정"과 이미지 17 불일치: 주석을 17.6 기준으로 정정(`demo/src/test/java/book_log/demo/repository/ContentRepositoryPostgresTest.java` 주석 한 줄, 코드 무변경), decisions.md 2026-11-01 항목의 `postgres:15-alpine` 문구를 17로 정정하고 2026-11-11 항목(메이저만 맞추고 마이너 미고정) 추가.
 3. 로컬 `~/.docker-java.properties`(api.version 우회)가 이제 불필요한지: Docker Desktop을 켜고 `mv ~/.docker-java.properties ~/.docker-java.properties.bak` → `cd demo && ./gradlew test --tests '*ContentRepositoryPostgresTest'` → 결과 XML에서 tests=9 skipped=0 확인 → 원래 이름으로 복구(통과하면 파일 삭제 여부는 사용자 판단).
 4. 가드는 클래스 이름 문자열 의존: 테스트 클래스 이름을 바꾸면 가드가 "XML 없음"으로 실패해 알려준다(의도된 동작).
 5. 26의 발견 1(Summary 문구)은 이번에 해소.
