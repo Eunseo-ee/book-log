@@ -37,6 +37,14 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
 
+      # (임시 진단) Postgres 테스트 skip 원인 확정용. runner의 Docker 버전/API 버전을 로그에 남긴다. 원인 확인 후 제거 (task 27)
+      - name: Docker 버전 확인 (임시 진단)
+        continue-on-error: true
+        run: |
+          docker --version || true
+          docker version || true
+          docker info || true
+
       # DB는 서비스 컨테이너가 아니라 테스트 프로파일의 H2(src/test/resources/application-test.yml)를 쓴다.
       # PostgreSQL 쿼리 검증 테스트(ContentRepositoryPostgresTest)는 Testcontainers가 runner의 Docker로 직접 띄운다.
       # 아래 시크릿은 ApiConfig(prefix "api")의 kakaoKey / tmdbToken에 relaxed binding으로 들어간다.
