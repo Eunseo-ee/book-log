@@ -2,7 +2,6 @@ package book_log.demo.config;
 
 import org.springframework.cache.annotation.CachingConfigurer;
 import org.springframework.cache.interceptor.CacheErrorHandler;
-import org.springframework.cache.interceptor.LoggingCacheErrorHandler;
 import org.springframework.context.annotation.Configuration;
 
 /**
@@ -19,8 +18,7 @@ public class CacheErrorConfig implements CachingConfigurer {
 
     @Override
     public CacheErrorHandler errorHandler() {
-        // 스프링 제공 구현체: get/put/evict/clear 실패를 로그만 남기고 무시
-        // [임시 진단 25-i] true = 스택트레이스(Caused by)까지 WARN으로 남김. 원인 확인 후 되돌릴지 결정 (되돌리기: 인자 제거)
-        return new LoggingCacheErrorHandler(true);
+        // get/put/evict/clear 실패를 한 줄 WARN(예외 클래스, 루트 원인, 키 해시)만 남기고 무시
+        return new MaskingCacheErrorHandler();
     }
 }
