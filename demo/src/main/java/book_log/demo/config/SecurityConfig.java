@@ -12,6 +12,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -81,6 +83,15 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    // 인증은 JWT 필터와 AuthService(DB 직접 조회)로만 하므로 UserDetailsService를 쓰지 않는다.
+    // 빈이 없으면 Boot가 기본 사용자 user와 임시 비밀번호를 만들어 로그에 찍으므로, 아무도 인증하지 못하는 빈을 둬 막는다
+    @Bean
+    public UserDetailsService userDetailsService() {
+        return username -> {
+            throw new UsernameNotFoundException("UserDetailsService 인증은 사용하지 않습니다.");
+        };
     }
 
     // 전역 CORS 설정. 컨트롤러별 @CrossOrigin은 쓰지 않는다
