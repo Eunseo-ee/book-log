@@ -65,3 +65,9 @@
 답:
 
 </details>
+
+## 9. CI 검증 결과 (push 후, task 29에서 기록)
+- 러너: Docker 29.4.2, Server API 1.54, Minimum API version 1.40 (27의 진단 결과와 동일, 러너 환경은 그대로).
+- Test summary: 클래스 45개, 334개 실행, skipped 0, failures 0, errors 0. `ContentRepositoryPostgresTest`: tests=9, skipped=0, failures=0, errors=0.
+- **확정된 사실**: 바뀐 것은 Testcontainers 버전(1.20.4 → 1.21.4)뿐이고 skipped 9 → 0이 됐다. 따라서 skip 원인은 1.20.4가 Docker 최소 API 1.40을 맞추지 못한 것이었고, 1.21.4로 해결됐다. 2절의 "1.21.4면 해결된다는 건 노트 한 줄에 기댄 추정"은 CI 실행으로 확인됨.
+- **여전히 미확인**: 1.21.4가 *어떻게* 고쳤는지(API 버전 기본값 변경 등, docker-java는 3.4.2 그대로), 로그에 컨테이너 시작 로그가 없어 근거는 결과 XML 수치뿐, 로컬(Docker 29.7.2)에서 우회 파일 없이 통과하는지.
