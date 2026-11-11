@@ -24,6 +24,11 @@ public class KakaoSearchService implements SearchProvider {
     
     private static final String BOOK_SEARCH_URL = "https://dapi.kakao.com/v3/search/book";
 
+    // 페이지 크기는 Kakao 기본값(10)에 맡기지 않고 요청에 명시한다. 요청 size와 totalPages 계산이 같은 상수를 쓴다.
+    static final int PAGE_SIZE = 20;
+    // Kakao 도서 검색 page 허용 범위 1~50 (공식 문서 기준, 원문 대조 미확인)
+    static final int MAX_PAGE = 50;
+
     private final RestTemplate restTemplate;
     private final ApiConfig apiConfig;
 
@@ -35,6 +40,17 @@ public class KakaoSearchService implements SearchProvider {
     // 형식 맞게 API 요청 링크 세팅 -> 요청 전송
     @Override
     public SearchResponse search(Category category, String query, int page) {
+        // 0. page가 상한을 넘으면 호출하지 않는다. 상한으로 줄여 보내면 마지막 페이지가 반복되어 보이고,
+        //    그대로 보내면 Kakao가 거절한다. 도달 가능한 페이지 수(MAX_PAGE)만 알리고 빈 결과를 돌려준다.
+        if (page > MAX_PAGE) {
+            return SearchResponse.builder()
+                    .results(Collections.emptyList())
+                    .totalPages(MAX_PAGE)
+                    .totalResults(0)
+                    .build();
+        }
+        int requestPage = Math.max(page, 1);
+
         // 1. 헤더 설정
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "KakaoAK "+apiConfig.getKakaoKey());
@@ -45,6 +61,8 @@ public class KakaoSearchService implements SearchProvider {
         //    완성된 URI 객체를 넘기므로 RestTemplate이 한 번 더 인코딩하지 않는다.
         URI uri = UriComponentsBuilder.fromUriString(BOOK_SEARCH_URL)
                 .queryParam("query", "{query}")
+                .queryParam("page", requestPage)
+                .queryParam("size", PAGE_SIZE)
                 .encode()
                 .buildAndExpand(query)
                 .toUri();
@@ -54,9 +72,9 @@ public class KakaoSearchService implements SearchProvider {
             ResponseEntity<KakaoBookResponse> response = restTemplate.exchange(uri, HttpMethod.GET, entity, KakaoBookResponse.class);
             KakaoBookResponse body = response.getBody();
 
-            // 전체 페이지 계산 (카카오 응답의 total_count 활용)
+            // 전체 페이지 계산 (카카오 응답의 total_count 활용): 정수 올림 나눗셈, Kakao page 상한으로 제한
             int totalCount = body.getMeta().getTotalCount();
-            int totalPages = (int) Math.ceil((double) totalCount / 20);
+            int totalPages = Math.min((totalCount + PAGE_SIZE - 1) / PAGE_SIZE, MAX_PAGE);
 
             return SearchResponse.builder()
                 .results(mapToResponse(body, category))
