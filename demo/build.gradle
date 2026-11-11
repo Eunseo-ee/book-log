@@ -27,6 +27,9 @@ repositories {
 // VS Code Java 확장(JDT)과의 호환을 위해 Lombok 버전 상향
 ext['lombok.version'] = '1.18.42'
 
+// Docker 29(최소 API 1.40)와 호환되도록 Testcontainers 상향 (Boot 3.4.1 BOM 기본값은 1.20.4, task 28)
+ext['testcontainers.version'] = '1.21.4'
+
 dependencies {
     // 메인 로직 관련
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
