@@ -35,7 +35,7 @@ public class HighlightService {
     public Long saveHighlight(Long memberId, HighlightRequestDto requestDto) {
         
         // 1. 부모 콘텐츠 찾기 (없으면 에러)
-        Content content = contentRepository.findById(requestDto.getContentId()).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 콘텐츠입니다. id=" + requestDto.getContentId()));
+        Content content = contentRepository.findById(requestDto.getContentId()).orElseThrow(() -> new ResourceNotFoundException("존재하지 않는 콘텐츠입니다. id=" + requestDto.getContentId()));
 
         // 내 콘텐츠에만 하이라이트를 달 수 있다
         validateOwner(content, memberId);

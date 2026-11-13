@@ -92,7 +92,7 @@ public class HighlightServiceTest {
         when(contentRepository.findById(999L)).thenReturn(Optional.empty());
 
         // when & then
-        assertThrows(IllegalArgumentException.class, () -> highlightService.saveHighlight(ME, requestDto));
+        assertThrows(ResourceNotFoundException.class, () -> highlightService.saveHighlight(ME, requestDto));
         verify(highlightRepository, never()).save(any()); // 저장이 절대 호출되면 안 됨
     }
 
@@ -195,6 +195,8 @@ public class HighlightServiceTest {
                 .build();
 
         // when & then
-        assertThrows(IllegalArgumentException.class, () -> highlightService.saveHighlight(ME, requestDto));
+        // 주의: contentRepository.findById(1L)를 stub하지 않아 서비스는 "없는 콘텐츠"로 먼저 실패한다(길이 검사는 서비스가 아니라 컨트롤러 @Valid).
+        // 예전에는 그 실패가 IllegalArgumentException이라 우연히 통과했다 (task 35, 발견 사항에 기록)
+        assertThrows(ResourceNotFoundException.class, () -> highlightService.saveHighlight(ME, requestDto));
     }
 }

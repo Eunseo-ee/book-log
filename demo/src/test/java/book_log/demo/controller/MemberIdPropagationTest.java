@@ -110,7 +110,7 @@ class MemberIdPropagationTest {
                 .andExpect(status().isOk());
         mockMvc.perform(post("/api/highlights").contentType(MediaType.APPLICATION_JSON).content(body)
                 .with(TestAuth.member(ME)))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
         mockMvc.perform(put("/api/highlights/10").contentType(MediaType.APPLICATION_JSON).content(body)
                 .with(TestAuth.member(ME)))
                 .andExpect(status().isOk());

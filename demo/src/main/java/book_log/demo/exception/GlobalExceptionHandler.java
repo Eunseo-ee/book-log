@@ -1,11 +1,17 @@
 package book_log.demo.exception;
 
 import java.time.DateTimeException;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+
+import jakarta.validation.ConstraintViolationException;
 
 @RestControllerAdvice // 전역 에러 처리기 - 모든 컨트롤러에서 발생하는 예외 잡음
 public class GlobalExceptionHandler {
@@ -75,6 +81,44 @@ public class GlobalExceptionHandler {
             "날짜 형식이 올바르지 않습니다. 월은 1-12 사이여야 합니다."
         );
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    // 3-1. 클래스 @Validated의 @Min/@Max 위반 (캘린더 year/month 등). 핸들러가 없으면 500으로 샌다
+    // 메시지는 위반 항목의 필드명 + 제약 메시지만 쓴다 (입력값은 에코하지 않는다)
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException e) {
+        String message = e.getConstraintViolations().stream()
+                .map(v -> lastNode(v.getPropertyPath().toString()) + ": " + v.getMessage())
+                .sorted()
+                .collect(Collectors.joining(", "));
+        return badRequest(message);
+    }
+
+    // 3-2. 쿼리 파라미터 타입 변환 실패 (Enum 오타, 숫자 아님 등). 입력값은 메시지에 넣지 않는다
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException e) {
+        return badRequest("파라미터 '" + e.getName() + "' 값이 올바르지 않습니다.");
+    }
+
+    // 3-3. 필수 쿼리 파라미터 누락
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingParameter(MissingServletRequestParameterException e) {
+        return badRequest("필수 파라미터 '" + e.getParameterName() + "'가 없습니다.");
+    }
+
+    // 3-4. 깨진 JSON / 변환 불가 body. 파서 메시지에는 입력 조각이 들어 있어 고정 문구만 쓴다
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleUnreadableBody(HttpMessageNotReadableException e) {
+        return badRequest("요청 본문을 읽을 수 없습니다. JSON 형식을 확인해주세요.");
+    }
+
+    private static ResponseEntity<ErrorResponse> badRequest(String message) {
+        return new ResponseEntity<>(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), message), HttpStatus.BAD_REQUEST);
+    }
+
+    // "getMonthlyActivity.month" → "month"
+    private static String lastNode(String propertyPath) {
+        return propertyPath.substring(propertyPath.lastIndexOf('.') + 1);
     }
 
     // 4. @Valid 유효성 검사 실패 시 발생하는 예외 처리

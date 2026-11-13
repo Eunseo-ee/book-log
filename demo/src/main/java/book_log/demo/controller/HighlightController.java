@@ -1,5 +1,6 @@
 package book_log.demo.controller;
 
+import java.net.URI;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -44,7 +45,9 @@ public class HighlightController {
     @PostMapping
     public ResponseEntity<Long> save(@Valid @RequestBody HighlightRequestDto requestDto,
             @AuthenticationPrincipal AuthenticatedMember member) {
-        return ResponseEntity.ok(highlightService.saveHighlight(member.id(), requestDto));
+        Long savedId = highlightService.saveHighlight(member.id(), requestDto);
+        // Location은 수정/삭제(PUT/DELETE) 경로를 가리킨다. 단건 GET /api/highlights/{id}는 없다
+        return ResponseEntity.created(URI.create("/api/highlights/" + savedId)).body(savedId);
     }
 
     @PutMapping("/{id}")
