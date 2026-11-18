@@ -86,17 +86,17 @@ flowchart LR
 
 운영에서는 Swagger가 꺼져 있어(로컬 비운영 프로파일에서만 `/swagger-ui/index.html`) 요약을 둡니다. `/api/auth/**`와 헬스체크를 제외한 모든 경로는 `Authorization: Bearer <access token>`이 필요합니다.
 
-| 영역 | 메서드·경로 | 인증 | 설명 |
-| --- | --- | --- | --- |
-| 인증 | `POST /api/auth/register`, `/login`, `/refresh` | 불필요 | 가입(201), 로그인, access 재발급. 로그인 실패 메시지는 통일 |
-| 검색 | `GET /api/search?category=&query=&page=` | 필요 | 카테고리 `BOOK` `MOVIE` `TV` `ANIME` `ANIME_MOVIE` `ANIME_TVA` `ALL`. 결과마다 `isSaved` 포함 |
-| 콘텐츠 | `POST /api/contents` | 필요 | 기록 저장(201 + Location). 중복은 400 |
-| | `GET /api/contents/check`, `/filter` | 필요 | 저장 여부 확인, 조건별 목록 |
-| 하이라이트 | `GET`·`POST /api/highlights` | 필요 | 모음집 조회, 저장(201 + Location) |
-| | `PUT`·`DELETE /api/highlights/{id}` | 필요 | 소유자만 가능(남의 것 403, 없는 id 404) |
-| 캘린더 | `GET /api/calendar/activities?year=&month=` | 필요 | 월별 기록 있는 날짜. 범위 밖 값은 400 |
-| 통계 | `GET /api/statistics?year=&month=` | 필요 | 월별 통계. 연·월 생략 시 현재(KST) |
-| 헬스 | `GET /actuator/health`, `/health/liveness`, `/health/readiness` | 불필요 | status만 노출 |
+| 영역&emsp;&emsp; | 메서드·경로 | 설명 |
+| --- | --- | --- |
+| 인증 | `POST /api/auth/register`, `/login`, `/refresh` | **인증 불필요.** 가입(201), 로그인, access 재발급. 로그인 실패 메시지는 통일 |
+| 검색 | `GET /api/search?category=&query=&page=` | 카테고리 `BOOK` `MOVIE` `TV` `ANIME` `ANIME_MOVIE` `ANIME_TVA` `ALL`. 결과마다 `isSaved` 포함 |
+| 콘텐츠 | `POST /api/contents` | 기록 저장(201 + Location). 중복은 400 |
+| | `GET /api/contents/check`, `/filter` | 저장 여부 확인, 조건별 목록 |
+| 하이라이트 | `GET`·`POST /api/highlights` | 모음집 조회, 저장(201 + Location) |
+| | `PUT`·`DELETE /api/highlights/{id}` | 소유자만 가능(남의 것 403, 없는 id 404) |
+| 캘린더 | `GET /api/calendar/activities?year=&month=` | 월별 기록 있는 날짜. 범위 밖 값은 400 |
+| 통계 | `GET /api/statistics?year=&month=` | 월별 통계. 연·월 생략 시 현재(KST) |
+| 헬스 | `GET /actuator/health`, `/health/liveness`, `/health/readiness` | **인증 불필요.** status만 노출 |
 
 ## 로컬 실행
 
