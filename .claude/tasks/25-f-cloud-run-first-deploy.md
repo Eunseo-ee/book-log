@@ -120,7 +120,7 @@
 1. Upstash에서 **도쿄 리전**으로 데이터베이스를 만든다(확정: DB·Redis·서버 간 지연 최소화). 호스트, 포트, 비밀번호를 확인한다. TLS 엔드포인트인지 확인(보통 TLS 필수).
 2. 환경변수: `SPRING_DATA_REDIS_HOST`(일반), `SPRING_DATA_REDIS_PORT`(일반), `SPRING_DATA_REDIS_PASSWORD`(시크릿), **`SPRING_DATA_REDIS_SSL_ENABLED=true`**(일반, 필수). yml이 이미지에 없으므로 이 값은 기본 false다(25-b 표의 "중요" 항목).
 3. ACL 사용자명이 `default`가 아닌 구성이면 `SPRING_DATA_REDIS_USERNAME`이 필요할 수 있다(25-a 표에 없는 변수, 확인 필요).
-4. Redis 리전은 Cloud Run 리전(asia-northeast1, 도쿄)과 같게 한다(확정). RTT는 이 task에서 **측정하지 않았다**(25-h).
+4. Redis 리전은 Cloud Run 리전(asia-northeast1, 도쿄)과 같게 한다(확정). RTT는 이 task에서 **측정하지 않았다**(25-h). (해소됨: docs/MEASUREMENTS.md 측정 A·B)
 5. 확인: 배포 후 로그에 `Redis` 연결 오류 WARN이 없는지, 같은 검색어를 두 번 불렀을 때 두 번째 응답이 빨라지는지(25-h).
 
 **timeout 기본값 1s를 운영에서 그대로 쓸지 → 유지**
